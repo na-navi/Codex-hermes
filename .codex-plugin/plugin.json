@@ -1,7 +1,7 @@
 {
   "name": "codex-hermes",
   "version": "0.1.0",
-  "description": "Codex slash command for delegating work to Hermes CLI models with an autonomous review loop.",
+  "description": "Experimental Codex plugin for delegating work to Hermes CLI models with an autonomous review loop.",
   "author": {
     "name": "Local",
     "url": "https://github.com/na-navi/Codex-hermes"
@@ -17,8 +17,8 @@
   ],
   "interface": {
     "displayName": "Codex Hermes",
-    "shortDescription": "Delegate Codex tasks to Hermes CLI models and review the results.",
-    "longDescription": "Adds a /hermes slash command prompt for Codex. The command asks a Hermes CLI model for help, then has Codex review the response, run local checks when appropriate, and send up to three focused follow-up review rounds through hermes --resume.",
+    "shortDescription": "Experimental bridge from Codex tasks to Hermes CLI models.",
+    "longDescription": "Development-stage Codex plugin for asking a Hermes CLI model for help, then having Codex review the response, run local checks when appropriate, and send focused follow-up review rounds through hermes --resume. The Hermes conversation path works, but slash command discovery is still under investigation.",
     "developerName": "Local",
     "category": "Coding",
     "capabilities": [

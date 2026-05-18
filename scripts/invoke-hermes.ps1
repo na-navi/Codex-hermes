@@ -11,7 +11,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$stateDir = Join-Path $scriptDir ".state"
+$stateDir = if (-not [string]::IsNullOrWhiteSpace($env:CODEX_HERMES_STATE_DIR)) {
+    $env:CODEX_HERMES_STATE_DIR
+} else {
+    Join-Path ([System.IO.Path]::GetTempPath()) "codex-hermes"
+}
 $modelCache = Join-Path $stateDir "default-model.txt"
 $defaultModel = "grok-4.3"
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
@@ -62,7 +66,13 @@ function Write-CachedModel {
 function Get-ResponseBlock {
     param([string]$Output)
 
-    $block = [regex]::Match($Output, "╭─[\s\S]*?╮\r?\n([\s\S]*?)╰─")
+    $boxTopLeft = [regex]::Escape([string][char]0x256D)
+    $boxBottomLeft = [regex]::Escape([string][char]0x2570)
+    $boxHorizontal = [regex]::Escape([string][char]0x2500)
+    $boxTopRight = [regex]::Escape([string][char]0x256E)
+
+    $blockPattern = "(?m)^\s*${boxTopLeft}${boxHorizontal}[^\r\n]*${boxTopRight}\r*\n([\s\S]*?)^\s*${boxBottomLeft}${boxHorizontal}"
+    $block = [regex]::Match($Output, $blockPattern)
     if ($block.Success) {
         $lines = $block.Groups[1].Value -split "\r?\n"
         return (($lines | ForEach-Object { $_ -replace "^\s{4}", "" }) -join [Environment]::NewLine).Trim()
@@ -77,8 +87,8 @@ function Get-ResponseBlock {
         "^Session:\s",
         "^Duration:\s",
         "^Messages:\s",
-        "^╭─",
-        "^╰─"
+        "^\s*${boxTopLeft}${boxHorizontal}",
+        "^\s*${boxBottomLeft}${boxHorizontal}"
     )
     $filtered = $Output -split "\r?\n" | Where-Object {
         $line = $_
@@ -189,6 +199,10 @@ if (-not [string]::IsNullOrWhiteSpace($Provider)) {
 $output = & $hermes.Source @args 2>&1
 $exitCode = $LASTEXITCODE
 $textOutput = ($output | Out-String).TrimEnd()
+
+if ($null -eq $exitCode -and $?) {
+    $exitCode = 0
+}
 
 if ($exitCode -ne 0) {
     throw "Hermes CLI failed with exit code ${exitCode}:`n$textOutput"

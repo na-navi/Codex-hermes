@@ -11,6 +11,14 @@ Codex がレビューしてから処理を続けるための実験的な Codex p
 任意の Codex workspace から Hermes タスクを実行して、Hermes の返答を受け取れる
 状態にします。
 
+## デモ
+
+![Codex Hermes review loop demo](./assets/demo-review-loop.webp)
+
+このデモは、plain `hermes` と Codex Hermes の違いを示します。plain Hermes は
+モデル回答を直接返します。一方で Codex Hermes は、その回答を untrusted data として
+扱い、ローカルリポジトリと照合してからレビュー済みの最終回答を返します。
+
 ## 最新リリース
 
 - [v0.1.2 - Public metadata cleanup for installable-first distribution](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.2)

@@ -10,6 +10,15 @@ then lets Codex review the returned answer before continuing.
 The goal is simple: install this repo as a Codex plugin, run a Hermes task from
 any Codex workspace, and see a Hermes reply come back.
 
+## Demo
+
+![Codex Hermes review loop demo](./assets/demo-review-loop.webp)
+
+The demo shows the difference between plain `hermes` and Codex Hermes: plain
+Hermes returns a model answer directly, while Codex Hermes treats that answer as
+untrusted data, checks it against the local repository, and returns a reviewed
+final answer.
+
 ## Latest Release
 
 - [v0.1.2 - Public metadata cleanup for installable-first distribution](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.2)

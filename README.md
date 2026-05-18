@@ -1,3 +1,3 @@
 # codex-hermes
 
-まだスキルにもなってない生ごみです。[/予定](PLANS.md)
+Not even a skill yet. Raw garbage. [/plans](PLANS.md)

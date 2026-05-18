@@ -14,7 +14,7 @@ $hermes -m glm-5.1 -p some-provider propose a fix for issue #12
 
 | Pri | Item | Notes |
 |-----|------|-------|
-| P0 | **Skill discovery** — Hermes skill must be visible in Codex App | `.agents/skills/hermes/SKILL.md` added for repo discovery. Verify `$hermes` after restarting Codex App. |
+| P0 | **Skill discovery** — Hermes skill must be visible in Codex App | Confirmed manually in Codex App with this repo open; `$hermes` invocation works. |
 | P1 | **Plugin manifest** — `"skills": "./skills/"` declared | Added in v0.1.1. Needs confirmation that Codex reads this field. |
 | P1 | **Security note** — document escalation risk explicitly | Running Hermes with escalation gives external agent process access outside the Codex sandbox. Must warn users about secrets / token exposure. |
 | P1 | **Minimal tests** — flag parser, response parser, missing-Hermes error | Tests for `split_message_flags` (quoted args, `-m`/`-p`/`--raw`), `response_block` (box-drawing output), `Session:` regex, and `hermes` not-on-PATH error. |
@@ -24,6 +24,7 @@ $hermes -m glm-5.1 -p some-provider propose a fix for issue #12
 ## Done
 
 - `.agents/skills/hermes/SKILL.md` — Codex App repo skill for `$hermes` explicit invocation
+- Manual verification: `$hermes` can be invoked from Codex App with this repository open.
 - `skills/hermes/SKILL.md` — plugin-bundled skill definition with frontmatter, simplified workflow
 - `.agents/plugins/marketplace.json` — local plugin marketplace registration for Codex App discovery
 - `scripts/invoke-hermes.py` can call Hermes CLI
@@ -47,12 +48,11 @@ $hermes -m glm-5.1 -p some-provider propose a fix for issue #12
 
 | Item | Detail |
 |------|--------|
-| **Skill discovery verification** | Confirm `$hermes` appears after Codex App restart with this repo open. |
 | **End-to-end test** | No automated test for the full Codex → skill → Hermes → review → resume loop. |
 | **Unit tests** | No automated tests for the Hermes wrapper yet. |
 | **Validation script** | `scripts/validate-plugin.py` exists; CI still needs to run it. |
 | **CI** | No GitHub Actions for lint/validate/test. |
-| **Plugin store** | Not a priority until skill discovery is verified and version ≥ 1.0.0. |
+| **Plugin store** | Not a priority until version ≥ 1.0.0. |
 
 ## Architecture
 

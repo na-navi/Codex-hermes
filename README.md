@@ -1,5 +1,7 @@
 # codex-hermes
 
+![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+
 Mock plugin. The goal is simple: install this repo as a Codex plugin, run a Hermes task from Codex, and see a Hermes reply come back.
 
 ## What You Need

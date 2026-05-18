@@ -1,4 +1,7 @@
-# /hermes
+# /hermes (legacy)
+
+> **Canonical source: `skills/hermes/SKILL.md`**
+> This file is a compatibility copy. Behavior rules may drift — refer to the skill definition for the authoritative version.
 
 Delegate the user's task to Hermes CLI, then review and improve the answer before responding.
 

@@ -1,0 +1,30 @@
+{
+  "name": "codex-hermes",
+  "version": "0.1.0",
+  "description": "Codex slash command for delegating work to Hermes CLI models with an autonomous review loop.",
+  "author": {
+    "name": "Local"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "hermes",
+    "slash-command",
+    "review"
+  ],
+  "interface": {
+    "displayName": "Codex Hermes",
+    "shortDescription": "Delegate Codex tasks to Hermes CLI models and review the results.",
+    "longDescription": "Adds a /hermes slash command prompt for Codex. The command asks a Hermes CLI model for help, then has Codex review the response, run local checks when appropriate, and send up to three focused follow-up review rounds through hermes --resume.",
+    "developerName": "Local",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use /hermes to ask another model to review or solve a task"
+    ],
+    "screenshots": []
+  }
+}

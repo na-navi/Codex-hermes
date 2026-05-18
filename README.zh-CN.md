@@ -10,6 +10,14 @@ Hermes CLI，然后由 Codex 审查 Hermes 返回的结果，再继续处理。
 目标很简单：把这个仓库安装为 Codex plugin，然后从任意 Codex workspace
 运行 Hermes 任务，并看到 Hermes 返回的回复。
 
+## 演示
+
+![Codex Hermes review loop demo](./assets/demo-review-loop.webp)
+
+这个演示展示了 plain `hermes` 和 Codex Hermes 的区别：plain Hermes 会直接返回
+模型回答；Codex Hermes 会把该回答当作 untrusted data，先与本地仓库内容核对，
+再返回经过审查的最终回答。
+
 ## 最新版本
 
 - [v0.1.2 - Public metadata cleanup for installable-first distribution](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.2)

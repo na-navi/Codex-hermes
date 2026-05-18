@@ -14,15 +14,13 @@ Experimental Codex plugin for delegating tasks to Hermes Agent CLI.
 
 This project is still in development.
 
-The repository is public at this stage so the project can receive help and review from ChatGPT and other external collaborators while the Codex plugin command-discovery problem is being investigated.
-
-What works today:
+### What works today
 
 - Codex can call the local `hermes` CLI through `scripts/invoke-hermes.ps1`.
 - Hermes can answer prompts when run with the required filesystem permissions.
 - Codex can review Hermes responses and continue a Hermes session with corrective follow-up prompts.
 
-What does not work yet:
+### What does not work yet
 
 - `/hermes` is not currently recognized by Codex as a visible slash command.
 - The repository contains command prompt definitions, but the plugin is not yet being surfaced as a command skill in Codex.
@@ -59,7 +57,7 @@ scripts/invoke-hermes.ps1 -Message "test"
 On sandboxed Codex runs, Hermes may need escalation because it writes to its own home and log directories outside the workspace, such as:
 
 ```text
-C:\Users\class\AppData\Local\hermes\logs\agent.log
+%LOCALAPPDATA%\hermes\logs\agent.log
 ```
 
 The command prompt definition now records this rule:

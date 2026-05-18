@@ -1,10 +1,10 @@
 {
   "name": "codex-hermes",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Experimental Codex plugin for delegating work to Hermes CLI models with an autonomous review loop.",
   "skills": "./skills/",
   "author": {
-    "name": "Local",
+    "name": "na-navi",
     "url": "https://github.com/na-navi/Codex-hermes"
   },
   "homepage": "https://github.com/na-navi/Codex-hermes",
@@ -20,7 +20,7 @@
     "displayName": "Codex Hermes",
     "shortDescription": "Experimental bridge from Codex tasks to Hermes CLI models.",
     "longDescription": "Development-stage Codex plugin for asking a Hermes CLI model for help, then having Codex review the response, run local checks when appropriate, and send focused follow-up review rounds through hermes --resume.",
-    "developerName": "Local",
+    "developerName": "na-navi",
     "category": "Coding",
     "capabilities": [
       "Read",

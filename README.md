@@ -1,24 +1,30 @@
 # codex-hermes
 
+Languages: English | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
+
 ![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
 
-Mock plugin. The goal is simple: install this repo as a Codex plugin, run a Hermes task from Codex, and see a Hermes reply come back.
+Experimental Codex plugin that bridges Codex App tasks to the local Hermes CLI,
+then lets Codex review the returned answer before continuing.
+
+The goal is simple: install this repo as a Codex plugin, run a Hermes task from
+any Codex workspace, and see a Hermes reply come back.
 
 ## Latest Release
 
+- [v0.1.2 - Public metadata cleanup for installable-first distribution](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.2)
 - [v0.1.1 - Initial verified Codex App <-> Hermes CLI bridge](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.1)
 - No binary or bundle is attached yet; use the repository source directly.
 
 ## What You Need
 
-- Codex App with this repository open
+- Codex App
 - `hermes` CLI installed and available on `PATH`
 - This repository cloned locally
 
 ## Install
 
-1. Open this repository in Codex App.
-2. Make sure Hermes works from a terminal first.
+1. Make sure Hermes works from a terminal first.
 
 ```text
 hermes --help
@@ -26,22 +32,44 @@ hermes --help
 
 If that command fails, fix Hermes before continuing. This plugin cannot talk to Hermes without the CLI.
 
-3. Keep the repo root open in Codex App so the repo skill can be discovered.
-4. Optional, but recommended if you want the local hook:
+2. Install the plugin into your Codex plugin directory.
 
-```text
-git config core.hooksPath .githooks
+```powershell
+$pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
+Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
 ```
 
-5. Run the validator.
+3. Restart Codex App, or open a new thread, so the plugin skill list is refreshed.
+
+4. Run the validator from this repository.
 
 ```text
 python scripts/validate-plugin.py
 ```
 
+5. Optional, but recommended for development in this repository:
+
+```text
+git config core.hooksPath .githooks
+```
+
+## Development Mode
+
+When this repository is the active Codex workspace, Codex can also discover the
+repo-local skill at `.agents/skills/hermes/SKILL.md`. That is useful while
+developing the plugin, but it is not enough for other folders.
+
+For use from other workspaces, install the plugin so Codex can load:
+
+```text
+%USERPROFILE%\.codex\plugins\codex-hermes\skills\hermes\SKILL.md
+```
+
 ## Test the Hermes Link
 
-1. In Codex, invoke the Hermes skill with a short task.
+1. In Codex, invoke the Hermes skill with a short task from any workspace.
 
 ```text
 $hermes say hello
@@ -59,6 +87,7 @@ If you see no `SESSION_ID`, Hermes did not return a session marker, but the repl
 
 ## Files That Matter
 
+- [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json)
 - [`skills/hermes/SKILL.md`](skills/hermes/SKILL.md)
 - [`.agents/skills/hermes/SKILL.md`](.agents/skills/hermes/SKILL.md)
 - [`scripts/invoke-hermes.py`](scripts/invoke-hermes.py)

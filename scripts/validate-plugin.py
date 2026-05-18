@@ -114,6 +114,37 @@ def validate_skill() -> None:
         fail("description field missing in frontmatter")
 
 
+def validate_repo_skill() -> None:
+    section(".agents/skills/hermes/SKILL.md")
+    skill_path = ROOT / ".agents" / "skills" / "hermes" / "SKILL.md"
+    if not skill_path.exists():
+        fail(f"Repo skill not found at {skill_path}")
+        return
+
+    pass_("repo SKILL.md exists")
+    content = read_text(skill_path)
+    match = re.search(r"\A---\s*\n(.*?)\n---", content, re.DOTALL)
+    if not match:
+        fail("No YAML frontmatter (--- ... ---) found")
+        return
+
+    pass_("YAML frontmatter found")
+    frontmatter = match.group(1)
+
+    name_match = re.search(r"^name:\s*(\S+)", frontmatter, re.MULTILINE)
+    if not name_match:
+        fail("name field missing in frontmatter")
+    elif name_match.group(1) == "hermes":
+        pass_("name: hermes")
+    else:
+        fail(f"name is {name_match.group(1)!r}, expected 'hermes'")
+
+    if re.search(r"^description:\s*", frontmatter, re.MULTILINE):
+        pass_("description field present")
+    else:
+        fail("description field missing in frontmatter")
+
+
 def validate_wrapper() -> None:
     section("scripts/invoke-hermes.py")
     wrapper_path = ROOT / "scripts" / "invoke-hermes.py"
@@ -149,6 +180,7 @@ def scan_privacy_and_secrets() -> None:
     section("privacy & secret scan")
     scan_paths = [
         ".codex-plugin/plugin.json",
+        ".agents/skills/hermes/SKILL.md",
         "skills/hermes/SKILL.md",
         "commands/hermes.md",
         ".codex/commands/hermes.md",
@@ -191,6 +223,7 @@ def main() -> int:
     print(f"Root: {ROOT}")
     validate_plugin_json()
     validate_skill()
+    validate_repo_skill()
     validate_wrapper()
     validate_command_copies()
     scan_privacy_and_secrets()

@@ -4,9 +4,14 @@ Experimental Codex plugin for delegating work to Hermes CLI models with a Codex 
 
 ## Hermes Entry Point
 
-- Primary Codex-facing entrypoint: [`.codex/commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/.codex/commands/hermes.md)
+- Primary Codex App entrypoint: [`.agents/skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/.agents/skills/hermes/SKILL.md)
+- Plugin-bundled skill: [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
+- Legacy custom prompt experiment: [`.codex/commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/.codex/commands/hermes.md)
 - Legacy compatibility copy: [`commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/commands/hermes.md)
-- Canonical workflow: [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
+
+## Invocation Note
+
+`/hermes` is not guaranteed to exist as a native slash command in Codex App. Use `$hermes` to explicitly invoke the repo skill after Codex detects `.agents/skills/hermes/SKILL.md`.
 
 ## Validate
 

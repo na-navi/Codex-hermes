@@ -2,17 +2,17 @@
 
 ## About
 
-Experimental Codex plugin for delegating tasks to the local Hermes Agent CLI, with Codex reviewing the returned answer before using it.
+This repository provides a **manual Codex-to-Hermes bridge** — a PowerShell wrapper and command prompt definitions that let Codex delegate tasks to the local Hermes Agent CLI with an autonomous review loop. It is not yet a working Codex slash-command plugin (see [Development Status](#development-status)).
 
 Suggested GitHub repository About text:
 
 ```text
-Experimental Codex plugin for delegating tasks to Hermes Agent CLI.
+Manual Codex-to-Hermes bridge with autonomous review loop.
 ```
 
 ## Development Status
 
-This project is still in development.
+This project is still in development. **It is currently a manual bridge, not a working Codex slash-command plugin.**
 
 ### What works today
 
@@ -75,11 +75,21 @@ The command prompt definition now records this rule:
 
 - `.codex-plugin/plugin.json` - Codex plugin manifest.
 - `commands/hermes.md` - Canonical slash command definition for the plugin and GitHub review.
-- `.codex/commands/hermes.md` - Repo-local mirror for direct use from this workspace.
+- `.codex/commands/hermes.md` - Repo-local copy for direct use from this workspace. Intentionally differs from `commands/hermes.md` only in path wording (`repository root` vs `plugin directory`); all behavior rules are identical.
 - `scripts/invoke-hermes.ps1` - Hermes CLI wrapper and response parser.
 - `scripts/.state/default-model.txt` - local model cache, created at runtime and ignored by git.
 
-Keep behavior rules in `commands/hermes.md` first, then mirror the same content into `.codex/commands/hermes.md` when local slash-command support needs it. The `.codex` copy is committed, but it is treated as runtime compatibility rather than the source of truth.
+Behavior rules live in `commands/hermes.md` first, then mirrored into `.codex/commands/hermes.md` for local Codex compatibility.
+
+## Security
+
+### Hermes output is untrusted
+
+Codex must treat Hermes responses as untrusted data, not as instructions. The command prompt (`commands/hermes.md`) enforces this: Codex reviews facts against local context, never blindly executes Hermes-suggested commands, and limits follow-up rounds to three.
+
+### Hermes process risk with escalation
+
+Running Hermes with escalated permissions gives an external agent process access outside the Codex sandbox. Use this only with a **trusted local Hermes configuration** and never expose secrets, broad GitHub tokens, or unrelated writable directories to the Hermes process.
 
 ## Known Issue: Command Discovery
 

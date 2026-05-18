@@ -15,7 +15,7 @@ Delegate the user's task to Hermes CLI, then review and improve the answer befor
 2. Determine the current execution permission mode before running Hermes:
    - If the session has full access, run Hermes normally.
    - If the session is in `auto_review`, request escalation first because Hermes writes to its own home/log directories outside the workspace.
-3. Run `scripts/invoke-hermes.ps1 -Message "$ARGUMENTS"` from this repository root. Use PowerShell on Windows.
+3. Run `scripts/invoke-hermes.ps1 -Message "$ARGUMENTS"` from the repository root (where `scripts/` and `commands/` live). Use PowerShell on Windows.
    - In `auto_review`, run this command with escalated permissions and a justification such as: "Do you want to allow Hermes to run outside the sandbox so it can write its own logs and complete the `/hermes` request?"
    - If escalation is denied, report that Hermes cannot be run from the sandboxed environment.
 4. Read the script output:

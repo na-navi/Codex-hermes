@@ -19,8 +19,8 @@ The wrapper normalizes Hermes CLI output into structured markers:
 
 ```text
 MODEL=<model>
-PROVIDER=<provider>       ← present only when a provider was specified
-SESSION_ID=<id>           ← present when Hermes returns a session marker
+PROVIDER=<provider>
+SESSION_ID=<id>
 RESPONSE_BEGIN
 <Hermes answer text>
 ```

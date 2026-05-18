@@ -86,6 +86,7 @@ def response_block(output: str) -> str:
         r"^Resume this",
         r"^\s+hermes --resume",
         r"^Session:\s",
+        r"^session_id:\s",
         r"^Duration:\s",
         r"^Messages:\s",
         r"^\s*╭─",
@@ -110,6 +111,18 @@ def parse_args() -> argparse.Namespace:
         help="Override the repository root used for repo-local state and relative lookups.",
     )
     return parser.parse_args()
+
+
+def parse_session_id(output: str) -> str | None:
+    session_line = re.search(r"(?im)^(?:Session|session_id):\s*(\S+)", output)
+    if session_line:
+        return session_line.group(1)
+
+    resume_match = re.search(r"hermes --resume (\S+)", output)
+    if resume_match:
+        return resume_match.group(1)
+
+    return None
 
 
 def main() -> int:
@@ -156,15 +169,7 @@ def main() -> int:
     if completed.returncode != 0:
         raise SystemExit(f"Hermes CLI failed with exit code {completed.returncode}:\n{text_output}")
 
-    session_id = None
-    session_line = re.search(r"(?m)^Session:\s*(\S+)", text_output)
-    if session_line:
-        session_id = session_line.group(1)
-    else:
-        resume_match = re.search(r"hermes --resume (\S+)", text_output)
-        if resume_match:
-            session_id = resume_match.group(1)
-
+    session_id = parse_session_id(text_output)
     if not session_id and args.resume:
         session_id = args.resume
 

@@ -2,6 +2,12 @@
 
 Experimental Codex plugin for delegating work to Hermes CLI models with a Codex review loop.
 
+## Hermes Entry Point
+
+- Primary Codex-facing entrypoint: [`.codex/commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/.codex/commands/hermes.md)
+- Legacy compatibility copy: [`commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/commands/hermes.md)
+- Canonical workflow: [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
+
 ## Validate
 
 ```text

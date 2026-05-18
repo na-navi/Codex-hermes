@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""Git pre-commit hook for codex-hermes.
+
+This file intentionally uses Python only. Do not replace it with sh, ps1, cmd,
+or a wrapper around those shells.
+"""
+
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+def main() -> int:
+    hook_path = Path(__file__).resolve()
+    repo_root = hook_path.parents[1]
+    validator = repo_root / "scripts" / "validate-plugin.py"
+
+    return subprocess.call([sys.executable, str(validator)], cwd=repo_root)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

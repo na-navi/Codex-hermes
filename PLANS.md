@@ -1,31 +1,32 @@
 # Plans
 
-A Codex plugin skill (`skills/hermes/SKILL.md`) that delegates tasks to the local Hermes CLI, then has Codex review the response and send up to three corrective feedback rounds.
+A Codex repo/plugin skill that delegates tasks to the local Hermes CLI, then has Codex review the response and send up to three corrective feedback rounds.
 
 ```
-Use Hermes to review this diff
-Use Hermes -m grok-4.3 to explain this failing test
-Use Hermes -m glm-5.1 -p some-provider to propose a fix for issue #12
+$hermes review this diff
+$hermes -m grok-4.3 explain this failing test
+$hermes -m glm-5.1 -p some-provider propose a fix for issue #12
 ```
 
-> **Note**: This is a Codex **skill**, not a guaranteed `/hermes` slash command. The exact invocation surface depends on how Codex exposes plugin-provided skills.
+> **Note**: This is a Codex **skill**, not a guaranteed `/hermes` slash command. In Codex App, verify explicit invocation with `$hermes`; treat `/hermes` as non-goal unless the app exposes enabled skills in the slash command list.
 
 ## Priority
 
 | Pri | Item | Notes |
 |-----|------|-------|
-| P0 | **Skill discovery** — Hermes skill must be visible in Codex after plugin install | `skills/hermes/SKILL.md` + `plugin.json` + marketplace.json configured. Needs verification in Codex App. |
+| P0 | **Skill discovery** — Hermes skill must be visible in Codex App | `.agents/skills/hermes/SKILL.md` added for repo discovery. Verify `$hermes` after restarting Codex App. |
 | P1 | **Plugin manifest** — `"skills": "./skills/"` declared | Added in v0.1.1. Needs confirmation that Codex reads this field. |
 | P1 | **Security note** — document escalation risk explicitly | Running Hermes with escalation gives external agent process access outside the Codex sandbox. Must warn users about secrets / token exposure. |
-| P1 | **Minimal tests** — flag parser, response parser, missing-Hermes error | PowerShell tests for `Split-MessageFlags` (quoted args, `-m`/`-p`/`--raw`), `Get-ResponseBlock` (box-drawing output), `Session:` regex, and `hermes` not-on-PATH error. |
+| P1 | **Minimal tests** — flag parser, response parser, missing-Hermes error | Tests for `split_message_flags` (quoted args, `-m`/`-p`/`--raw`), `response_block` (box-drawing output), `Session:` regex, and `hermes` not-on-PATH error. |
 | P2 | **Drift prevention** — `commands/hermes.md` vs `.codex/commands/hermes.md` vs `skills/hermes/SKILL.md` | Marked as legacy copies pointing to canonical skill. A drift check script would help. |
-| P2 | **Validation script** | `scripts/validate-plugin.ps1` to check plugin.json structure, skill existence, frontmatter, and no hardcoded secrets. |
+| P2 | **Validation script** | `scripts/validate-plugin.py` to check plugin.json structure, skill existence, frontmatter, and no hardcoded secrets. |
 
 ## Done
 
-- `skills/hermes/SKILL.md` — canonical skill definition with frontmatter, simplified workflow
+- `.agents/skills/hermes/SKILL.md` — Codex App repo skill for `$hermes` explicit invocation
+- `skills/hermes/SKILL.md` — plugin-bundled skill definition with frontmatter, simplified workflow
 - `.agents/plugins/marketplace.json` — local plugin marketplace registration for Codex App discovery
-- `scripts/invoke-hermes.ps1` can call Hermes CLI
+- `scripts/invoke-hermes.py` can call Hermes CLI
   - UTF-8 encoding fixed for Japanese text on Windows
   - State directory configurable via `CODEX_HERMES_STATE_DIR` env var (default: `%TEMP%\codex-hermes`)
   - Model/provider caching in `default-model.txt`
@@ -40,15 +41,16 @@ Use Hermes -m glm-5.1 -p some-provider to propose a fix for issue #12
 - `.codex-plugin/plugin.json` updated with `"skills": "./skills/"`, keywords, version bumped to 0.1.1
 - `commands/` files marked as legacy/compatibility copies
 - Pre-publication cleanup: hardcoded username removed, LICENSE added, `.env.example` added
+- `.githooks/pre-commit` runs `scripts/validate-plugin.py` before local commits and is Python-only
 
 ## Not done
 
 | Item | Detail |
 |------|--------|
-| **Skill discovery verification** | Has anyone confirmed the skill appears in Codex App / CLI after plugin install? |
+| **Skill discovery verification** | Confirm `$hermes` appears after Codex App restart with this repo open. |
 | **End-to-end test** | No automated test for the full Codex → skill → Hermes → review → resume loop. |
-| **Unit tests** | No Pester or pwsh tests for the PowerShell wrapper. |
-| **Validation script** | No `scripts/validate-plugin.ps1` yet. |
+| **Unit tests** | No automated tests for the Hermes wrapper yet. |
+| **Validation script** | `scripts/validate-plugin.py` exists; CI still needs to run it. |
 | **CI** | No GitHub Actions for lint/validate/test. |
 | **Plugin store** | Not a priority until skill discovery is verified and version ≥ 1.0.0. |
 
@@ -58,10 +60,10 @@ Use Hermes -m glm-5.1 -p some-provider to propose a fix for issue #12
 User requests Hermes task via skill invocation
         │
         ▼
-Codex reads skills/hermes/SKILL.md
+Codex reads .agents/skills/hermes/SKILL.md or plugin-bundled skills/hermes/SKILL.md
         │
         ▼
-scripts/invoke-hermes.ps1 -Message "<message>"
+python scripts/invoke-hermes.py -Message "<message>"
         │
         ├─ Parses -m <model> / -p <provider> / --raw flags
         ├─ Resolves model (flag → cache → grok-4.3)
@@ -90,10 +92,12 @@ Codex reviews the response (untrusted!)
 | Path | Role |
 |------|------|
 | `.codex-plugin/plugin.json` | Plugin manifest (metadata + capabilities + skills declaration) |
-| `skills/hermes/SKILL.md` | **Canonical** skill definition — authoritative behavior rules |
-| `commands/hermes.md` | Legacy compatibility copy (canonical source: `skills/hermes/SKILL.md`) |
-| `.codex/commands/hermes.md` | Legacy compatibility copy (canonical source: `skills/hermes/SKILL.md`) |
-| `scripts/invoke-hermes.ps1` | Hermes CLI wrapper: flag parsing, model resolution, response normalization |
+| `.agents/skills/hermes/SKILL.md` | Codex App repo skill — primary local entrypoint |
+| `skills/hermes/SKILL.md` | Plugin-bundled skill definition |
+| `commands/hermes.md` | Legacy custom prompt experiment / compatibility copy |
+| `.codex/commands/hermes.md` | Legacy custom prompt experiment / compatibility copy |
+| `scripts/invoke-hermes.py` | Hermes CLI wrapper: flag parsing, model resolution, response normalization |
+| `.githooks/pre-commit` | Python-only local Git hook that validates plugin structure before commit |
 | `.agents/plugins/marketplace.json` | Local plugin marketplace registration for Codex App |
 | `scripts/.state/default-model.txt` | Runtime cache (gitignored) |
 | `PLANS.md` | This file — roadmap and design notes |

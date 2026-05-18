@@ -1,4 +1,6 @@
 scripts/.state/
+__pycache__/
 *.bundle
 .env
 *.log
+tests/

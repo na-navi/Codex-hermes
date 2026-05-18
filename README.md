@@ -2,13 +2,7 @@
 
 ## About
 
-**This repository is not yet usable as a Codex plugin.** It provides a prototype PowerShell wrapper and command prompt definitions for a manual Codex-to-Hermes bridge with an autonomous review loop. The `/hermes` slash command is not currently recognized by Codex (see [Development Status](#development-status)).
-
-Suggested GitHub repository About text:
-
-```text
-[WIP] Not yet usable as a Codex plugin. Prototype manual bridge.
-```
+まだスキルにもなってない生ごみです。
 
 ## Development Status
 

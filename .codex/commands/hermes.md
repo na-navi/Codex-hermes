@@ -18,7 +18,7 @@ Delegate the user's task to Hermes CLI, then review and improve the answer befor
 2. Determine the current execution permission mode before running Hermes:
    - If the session has full access, run Hermes normally.
    - If the session is in `auto_review`, request escalation first because Hermes writes to its own home/log directories outside the workspace.
-3. Run `python scripts/invoke-hermes.py -Message "$ARGUMENTS"`; the wrapper resolves the repository root automatically, so the caller does not need to be in the plugin root.
+3. Resolve the plugin root as the directory one level above this command file (`commands/hermes.md`), then run `python <plugin-root>/scripts/invoke-hermes.py -Message "$ARGUMENTS"`.
    - In `auto_review`, run this command with escalated permissions and a justification such as: "Do you want to allow Hermes to run outside the sandbox so it can write its own logs and complete the `/hermes` request?"
    - If escalation is denied, report that Hermes cannot be run from the sandboxed environment.
 4. Read the script output:
@@ -35,7 +35,7 @@ Delegate the user's task to Hermes CLI, then review and improve the answer befor
 6. If you find a concrete issue, send feedback back to Hermes with:
 
    ```text
-   python scripts/invoke-hermes.py -Resume <SESSION_ID> -Message "<specific review feedback>" -Model <MODEL>
+   python <plugin-root>/scripts/invoke-hermes.py -Resume <SESSION_ID> -Message "<specific review feedback>" -Model <MODEL>
    ```
 
    Include `-Provider <PROVIDER>` when a provider was used.

@@ -2,6 +2,8 @@
 
 语言: 简体中文 | [English](README.md) | [日本語](README.ja.md)
 
+![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+
 这是一个实验性的 Codex plugin，用于把 Codex App 中的任务转交给本地
 Hermes CLI，然后由 Codex 审查 Hermes 返回的结果，再继续处理。
 
@@ -35,8 +37,9 @@ hermes --help
 
 ```powershell
 $pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
-Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, README.md, LICENSE $pluginRoot
+Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
 ```
 
 3. 重启 Codex App，或打开一个新 thread，以刷新 plugin skill 列表。

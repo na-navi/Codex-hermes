@@ -2,6 +2,8 @@
 
 Languages: English | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
+![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+
 Experimental Codex plugin that bridges Codex App tasks to the local Hermes CLI,
 then lets Codex review the returned answer before continuing.
 
@@ -34,8 +36,9 @@ If that command fails, fix Hermes before continuing. This plugin cannot talk to 
 
 ```powershell
 $pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
-Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, README.md, LICENSE $pluginRoot
+Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
 ```
 
 3. Restart Codex App, or open a new thread, so the plugin skill list is refreshed.

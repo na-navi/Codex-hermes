@@ -2,6 +2,8 @@
 
 言語: 日本語 | [English](README.md) | [简体中文](README.zh-CN.md)
 
+![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+
 Codex App のタスクをローカルの Hermes CLI に渡し、返ってきた回答を
 Codex がレビューしてから処理を続けるための実験的な Codex plugin です。
 
@@ -36,8 +38,9 @@ Hermes CLI が使えない環境では Hermes と通信できません。
 
 ```powershell
 $pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
-Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, README.md, LICENSE $pluginRoot
+Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
 ```
 
 3. Codex App を再起動するか、新しい thread を開いて、plugin skill 一覧を更新します。

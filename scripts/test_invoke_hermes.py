@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+"""Tests for scripts/invoke-hermes.py."""
+
+from __future__ import annotations
+
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts" / "invoke-hermes.py"
+FAKE_BIN = ROOT / "scripts" / ".state" / "test-bin"
+
+
+class InvokeHermesTests(unittest.TestCase):
+    def run_wrapper(self, *args: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["PATH"] = str(FAKE_BIN) + os.pathsep + env.get("PATH", "")
+        env["PYTHONUTF8"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["CODEX_HERMES_STATE_DIR"] = str(Path(tempfile.gettempdir()) / "codex-hermes-test-state")
+        if extra_env:
+            env.update(extra_env)
+
+        return subprocess.run(
+            [sys.executable, str(SCRIPT), *args],
+            cwd=tempfile.gettempdir(),
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+        )
+
+    def test_main_flow_normalizes_output_and_is_cwd_independent(self) -> None:
+        result = self.run_wrapper("-Message", "hello")
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=grok-4.3", result.stdout)
+        self.assertIn("SESSION_ID=test-session-123", result.stdout)
+        self.assertIn("RESPONSE_BEGIN", result.stdout)
+        self.assertIn("日本語OK", result.stdout)
+
+    def test_resume_flow_uses_resume_session(self) -> None:
+        result = self.run_wrapper("-Message", "follow up", "-Resume", "resume-123")
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("SESSION_ID=test-session-123", result.stdout)
+        self.assertIn("RESPONSE_BEGIN", result.stdout)
+        self.assertIn("日本語OK", result.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

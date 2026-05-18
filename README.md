@@ -2,10 +2,14 @@
 
 ![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
 
-Mock plugin. The goal is simple: install this repo as a Codex plugin, run a Hermes task from Codex, and see a Hermes reply come back.
+Experimental Codex plugin that bridges Codex App tasks to the local Hermes CLI,
+then lets Codex review the returned answer before continuing.
+
+The goal is simple: install this repo as a Codex plugin, run a Hermes task from Codex, and see a Hermes reply come back.
 
 ## Latest Release
 
+- [v0.1.2 - Public metadata cleanup for installable-first distribution](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.2)
 - [v0.1.1 - Initial verified Codex App <-> Hermes CLI bridge](https://github.com/na-navi/Codex-hermes/releases/tag/v0.1.1)
 - No binary or bundle is attached yet; use the repository source directly.
 

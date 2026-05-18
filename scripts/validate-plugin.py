@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from filecmp import cmp
 from pathlib import Path
 
 
@@ -122,6 +123,28 @@ def validate_wrapper() -> None:
         fail(f"invoke-hermes.py not found at {wrapper_path}")
 
 
+def validate_command_copies() -> None:
+    section("commands/hermes.md copies")
+    root_command = ROOT / "commands" / "hermes.md"
+    codex_command = ROOT / ".codex" / "commands" / "hermes.md"
+
+    if root_command.exists():
+        pass_("commands/hermes.md exists")
+    else:
+        fail(f"commands/hermes.md not found at {root_command}")
+
+    if codex_command.exists():
+        pass_(".codex/commands/hermes.md exists")
+    else:
+        fail(f".codex/commands/hermes.md not found at {codex_command}")
+
+    if root_command.exists() and codex_command.exists():
+        if cmp(root_command, codex_command, shallow=False):
+            pass_("legacy command copies are identical")
+        else:
+            fail("commands/hermes.md and .codex/commands/hermes.md differ")
+
+
 def scan_privacy_and_secrets() -> None:
     section("privacy & secret scan")
     scan_paths = [
@@ -169,6 +192,7 @@ def main() -> int:
     validate_plugin_json()
     validate_skill()
     validate_wrapper()
+    validate_command_copies()
     scan_privacy_and_secrets()
 
     print("\n================================")

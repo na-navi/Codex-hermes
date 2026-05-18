@@ -14,9 +14,19 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $stateDir = Join-Path $scriptDir ".state"
 $modelCache = Join-Path $stateDir "default-model.txt"
 $defaultModel = "grok-4.3"
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+# Keep Hermes/Python and PowerShell native-command text on UTF-8. This matters
+# on Windows where the active console code page may otherwise corrupt Japanese
+# text and Hermes box-drawing output before the parser sees it.
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
 
 if (-not (Test-Path $stateDir)) {
-    New-Item -ItemType Directory -Path $stateDir | Out-Null
+    New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 }
 
 function Read-CachedModel {
@@ -24,7 +34,7 @@ function Read-CachedModel {
         return $null
     }
 
-    $raw = (Get-Content -Raw -Path $modelCache).Trim()
+    $raw = ([System.IO.File]::ReadAllText($modelCache, [System.Text.Encoding]::UTF8)).Trim()
     if ([string]::IsNullOrWhiteSpace($raw)) {
         return $null
     }
@@ -43,9 +53,9 @@ function Write-CachedModel {
     )
 
     if ([string]::IsNullOrWhiteSpace($ResolvedProvider)) {
-        Set-Content -Path $modelCache -Value $ResolvedModel -NoNewline
+        [System.IO.File]::WriteAllText($modelCache, $ResolvedModel, $utf8NoBom)
     } else {
-        Set-Content -Path $modelCache -Value "$ResolvedModel|$ResolvedProvider" -NoNewline
+        [System.IO.File]::WriteAllText($modelCache, "$ResolvedModel|$ResolvedProvider", $utf8NoBom)
     }
 }
 
@@ -58,8 +68,21 @@ function Get-ResponseBlock {
         return (($lines | ForEach-Object { $_ -replace "^\s{4}", "" }) -join [Environment]::NewLine).Trim()
     }
 
+    $skipPatterns = @(
+        "^Query:",
+        "^Initializing",
+        "^──+$",
+        "^Resume this",
+        "^\s+hermes --resume",
+        "^Session:\s",
+        "^Duration:\s",
+        "^Messages:\s",
+        "^╭─",
+        "^╰─"
+    )
     $filtered = $Output -split "\r?\n" | Where-Object {
-        $_ -notmatch "^(Query:|Initializing|──|Resume this|  hermes|Session:|Duration:|Messages:|╭─|╰─)"
+        $line = $_
+        -not ($skipPatterns | Where-Object { $line -match $_ } | Select-Object -First 1)
     }
     $text = ($filtered -join [Environment]::NewLine).Trim()
     if ([string]::IsNullOrWhiteSpace($text)) {
@@ -172,13 +195,13 @@ if ($exitCode -ne 0) {
 }
 
 $sessionId = $null
-$sessionMatch = [regex]::Match($textOutput, "hermes --resume (\S+)")
-if ($sessionMatch.Success) {
-    $sessionId = $sessionMatch.Groups[1].Value
+$sessionLineMatch = [regex]::Match($textOutput, "(?m)^Session:\s*(\S+)")
+if ($sessionLineMatch.Success) {
+    $sessionId = $sessionLineMatch.Groups[1].Value
 } else {
-    $sessionLineMatch = [regex]::Match($textOutput, "(?m)^Session:\s*(\S+)")
-    if ($sessionLineMatch.Success) {
-        $sessionId = $sessionLineMatch.Groups[1].Value
+    $sessionMatch = [regex]::Match($textOutput, "hermes --resume (\S+)")
+    if ($sessionMatch.Success) {
+        $sessionId = $sessionMatch.Groups[1].Value
     }
 }
 

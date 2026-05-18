@@ -2,12 +2,12 @@
 
 ## About
 
-This repository provides a **manual Codex-to-Hermes bridge** — a PowerShell wrapper and command prompt definitions that let Codex delegate tasks to the local Hermes Agent CLI with an autonomous review loop. It is not yet a working Codex slash-command plugin (see [Development Status](#development-status)).
+**This repository is not yet usable as a Codex plugin.** It provides a prototype PowerShell wrapper and command prompt definitions for a manual Codex-to-Hermes bridge with an autonomous review loop. The `/hermes` slash command is not currently recognized by Codex (see [Development Status](#development-status)).
 
 Suggested GitHub repository About text:
 
 ```text
-Manual Codex-to-Hermes bridge with autonomous review loop.
+[WIP] Not yet usable as a Codex plugin. Prototype manual bridge.
 ```
 
 ## Development Status

@@ -54,8 +54,8 @@ If you see no `SESSION_ID`, Hermes did not return a session marker, but the repl
 
 ## Files That Matter
 
-- [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
-- [`.agents/skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/.agents/skills/hermes/SKILL.md)
-- [`scripts/invoke-hermes.py`](/D:/data/CodexApp/Codex-hermes/scripts/invoke-hermes.py)
-- [`scripts/validate-plugin.py`](/D:/data/CodexApp/Codex-hermes/scripts/validate-plugin.py)
+- [`skills/hermes/SKILL.md`](skills/hermes/SKILL.md)
+- [`.agents/skills/hermes/SKILL.md`](.agents/skills/hermes/SKILL.md)
+- [`scripts/invoke-hermes.py`](scripts/invoke-hermes.py)
+- [`scripts/validate-plugin.py`](scripts/validate-plugin.py)
 

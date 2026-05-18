@@ -1,34 +1,59 @@
 # codex-hermes
 
-Experimental Codex plugin for delegating work to Hermes CLI models with a Codex review loop.
+Mock plugin. The goal is simple: install this repo as a Codex plugin, run a Hermes task from Codex, and see a Hermes reply come back.
 
-## Hermes Entry Point
+## What You Need
 
-- Primary Codex App entrypoint: [`.agents/skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/.agents/skills/hermes/SKILL.md)
-- Plugin-bundled skill: [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
-- Legacy custom prompt experiment: [`.codex/commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/.codex/commands/hermes.md)
-- Legacy compatibility copy: [`commands/hermes.md`](/D:/data/CodexApp/Codex-hermes/commands/hermes.md)
+- Codex App with this repository open
+- `hermes` CLI installed and available on `PATH`
+- This repository cloned locally
 
-## Invocation Note
+## Install
 
-`/hermes` is not guaranteed to exist as a native slash command in Codex App. Use `$hermes` to explicitly invoke the repo skill after Codex detects `.agents/skills/hermes/SKILL.md`.
-
-## Validate
+1. Open this repository in Codex App.
+2. Make sure Hermes works from a terminal first.
 
 ```text
-python scripts/validate-plugin.py
+hermes --help
 ```
 
-## Git Hooks
+If that command fails, fix Hermes before continuing. This plugin cannot talk to Hermes without the CLI.
 
-Enable the repository-managed hooks once per clone:
+3. Keep the repo root open in Codex App so the repo skill can be discovered.
+4. Optional, but recommended if you want the local hook:
 
 ```text
 git config core.hooksPath .githooks
 ```
 
-After that, `git commit` runs `.githooks/pre-commit`, which validates the plugin structure before the commit is created.
+5. Run the validator.
 
-Hook and validation automation in this repository is Python-only. Do not add `sh`, `ps1`, `bat`, or `cmd` wrappers for these paths.
+```text
+python scripts/validate-plugin.py
+```
 
-See [PLANS.md](PLANS.md) for the current roadmap.
+## Test the Hermes Link
+
+1. In Codex, invoke the Hermes skill with a short task.
+
+```text
+$hermes say hello
+```
+
+2. Wait for the run to finish.
+3. Confirm the output contains:
+   - `MODEL=...`
+   - `SESSION_ID=...`
+   - `RESPONSE_BEGIN`
+   - a Hermes reply after `RESPONSE_BEGIN`
+
+If you see `Hermes CLI was not found on PATH`, the CLI is not installed or the shell cannot see it yet.
+If you see no `SESSION_ID`, Hermes did not return a session marker, but the reply can still be valid.
+
+## Files That Matter
+
+- [`skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/skills/hermes/SKILL.md)
+- [`.agents/skills/hermes/SKILL.md`](/D:/data/CodexApp/Codex-hermes/.agents/skills/hermes/SKILL.md)
+- [`scripts/invoke-hermes.py`](/D:/data/CodexApp/Codex-hermes/scripts/invoke-hermes.py)
+- [`scripts/validate-plugin.py`](/D:/data/CodexApp/Codex-hermes/scripts/validate-plugin.py)
+

@@ -14,7 +14,7 @@ Use Hermes -m glm-5.1 -p some-provider to propose a fix for issue #12
 
 | Pri | Item | Notes |
 |-----|------|-------|
-| P0 | **Skill discovery** — Hermes skill must be visible in Codex after plugin install | `skills/hermes/SKILL.md` created. Now needs verification in Codex App and Codex CLI. |
+| P0 | **Skill discovery** — Hermes skill must be visible in Codex after plugin install | `skills/hermes/SKILL.md` + `plugin.json` + marketplace.json configured. Needs verification in Codex App. |
 | P1 | **Plugin manifest** — `"skills": "./skills/"` declared | Added in v0.1.1. Needs confirmation that Codex reads this field. |
 | P1 | **Security note** — document escalation risk explicitly | Running Hermes with escalation gives external agent process access outside the Codex sandbox. Must warn users about secrets / token exposure. |
 | P1 | **Minimal tests** — flag parser, response parser, missing-Hermes error | PowerShell tests for `Split-MessageFlags` (quoted args, `-m`/`-p`/`--raw`), `Get-ResponseBlock` (box-drawing output), `Session:` regex, and `hermes` not-on-PATH error. |
@@ -23,7 +23,8 @@ Use Hermes -m glm-5.1 -p some-provider to propose a fix for issue #12
 
 ## Done
 
-- `skills/hermes/SKILL.md` — canonical skill definition with frontmatter
+- `skills/hermes/SKILL.md` — canonical skill definition with frontmatter, simplified workflow
+- `.agents/plugins/marketplace.json` — local plugin marketplace registration for Codex App discovery
 - `scripts/invoke-hermes.ps1` can call Hermes CLI
   - UTF-8 encoding fixed for Japanese text on Windows
   - State directory configurable via `CODEX_HERMES_STATE_DIR` env var (default: `%TEMP%\codex-hermes`)
@@ -93,5 +94,6 @@ Codex reviews the response (untrusted!)
 | `commands/hermes.md` | Legacy compatibility copy (canonical source: `skills/hermes/SKILL.md`) |
 | `.codex/commands/hermes.md` | Legacy compatibility copy (canonical source: `skills/hermes/SKILL.md`) |
 | `scripts/invoke-hermes.ps1` | Hermes CLI wrapper: flag parsing, model resolution, response normalization |
+| `.agents/plugins/marketplace.json` | Local plugin marketplace registration for Codex App |
 | `scripts/.state/default-model.txt` | Runtime cache (gitignored) |
 | `PLANS.md` | This file — roadmap and design notes |

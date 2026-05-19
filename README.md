@@ -1,21 +1,21 @@
-# codex-hermes
+# cormes
 
 Languages: English | [日本語](README.ja.md) | [简体中文](README.zh-CN.md)
 
-![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+![Cormes workflow hero](./assets/codex-hermes-hero.webp)
 
 Experimental Codex plugin that bridges Codex App tasks to the local Hermes CLI,
 then lets Codex review the returned answer before continuing.
 
-The goal is simple: install this repo as a Codex plugin, run a Hermes task from
-any Codex workspace, and see a Hermes reply come back.
+Cormes is the Codex-side wrapper. It delegates to the external `hermes` CLI,
+then treats the Hermes answer as untrusted data for Codex to review.
 
 ## Demo
 
-![Codex Hermes review loop demo](./assets/demo-review-loop.webp)
+![Cormes review loop demo](./assets/demo-review-loop.webp)
 
-The demo shows the difference between plain `hermes` and Codex Hermes: plain
-Hermes returns a model answer directly, while Codex Hermes treats that answer as
+The demo shows the difference between plain `hermes` and Cormes: plain
+Hermes returns a model answer directly, while Cormes treats that answer as
 untrusted data, checks it against the local repository, and returns a reviewed
 final answer.
 
@@ -44,7 +44,7 @@ If that command fails, fix Hermes before continuing. This plugin cannot talk to 
 2. Install the plugin into your Codex plugin directory.
 
 ```powershell
-$pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+$pluginRoot = "$env:USERPROFILE\.codex\plugins\cormes"
 Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
 Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
@@ -67,21 +67,21 @@ git config core.hooksPath .githooks
 ## Development Mode
 
 When this repository is the active Codex workspace, Codex can also discover the
-repo-local skill at `.agents/skills/hermes/SKILL.md`. That is useful while
+repo-local skill at `.agents/skills/cormes/SKILL.md`. That is useful while
 developing the plugin, but it is not enough for other folders.
 
 For use from other workspaces, install the plugin so Codex can load:
 
 ```text
-%USERPROFILE%\.codex\plugins\codex-hermes\skills\hermes\SKILL.md
+%USERPROFILE%\.codex\plugins\cormes\skills\cormes\SKILL.md
 ```
 
 ## Test the Hermes Link
 
-1. In Codex, invoke the Hermes skill with a short task from any workspace.
+1. In Codex, invoke the Cormes skill with a short task from any workspace.
 
 ```text
-$hermes say hello
+$cormes say hello
 ```
 
 2. Wait for the run to finish.
@@ -94,11 +94,17 @@ $hermes say hello
 If you see `Hermes CLI was not found on PATH`, the CLI is not installed or the shell cannot see it yet.
 If you see no `SESSION_ID`, Hermes did not return a session marker, but the reply can still be valid.
 
+## Compatibility
+
+`$cormes` is the primary Codex skill invocation. Legacy `$hermes` invocation is not kept as a separate skill alias in this repository, because that would preserve the wrapper/dependency name collision.
+
+The external CLI binary remains `hermes`. Legacy environment variables `CODEX_HERMES_STATE_DIR` and `CODEX_HERMES_REPO_ROOT` are still accepted as fallback aliases for one-way compatibility during the rename.
+
 ## Files That Matter
 
 - [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json)
-- [`skills/hermes/SKILL.md`](skills/hermes/SKILL.md)
-- [`.agents/skills/hermes/SKILL.md`](.agents/skills/hermes/SKILL.md)
-- [`scripts/invoke-hermes.py`](scripts/invoke-hermes.py)
+- [`skills/cormes/SKILL.md`](skills/cormes/SKILL.md)
+- [`.agents/skills/cormes/SKILL.md`](.agents/skills/cormes/SKILL.md)
+- [`scripts/invoke-cormes.py`](scripts/invoke-cormes.py)
 - [`scripts/validate-plugin.py`](scripts/validate-plugin.py)
 

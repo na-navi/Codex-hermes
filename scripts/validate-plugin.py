@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the codex-hermes plugin structure and common publication issues."""
+"""Validate the cormes plugin structure and common publication issues."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 EXIT_CODE = 0
+SKILL_NAME = "cormes"
+PLUGIN_NAME = "cormes"
 
 
 def pass_(message: str) -> None:
@@ -48,8 +50,10 @@ def validate_plugin_json() -> None:
 
     pass_("plugin.json is valid JSON")
 
-    if plugin.get("name"):
-        pass_(f"name: {plugin['name']}")
+    if plugin.get("name") == PLUGIN_NAME:
+        pass_(f"name: {PLUGIN_NAME}")
+    elif plugin.get("name"):
+        fail(f"name is {plugin['name']!r}, expected {PLUGIN_NAME!r}")
     else:
         fail("name is missing")
 
@@ -84,8 +88,8 @@ def validate_plugin_json() -> None:
 
 
 def validate_skill() -> None:
-    section("skills/hermes/SKILL.md")
-    skill_path = ROOT / "skills" / "hermes" / "SKILL.md"
+    section("skills/cormes/SKILL.md")
+    skill_path = ROOT / "skills" / "cormes" / "SKILL.md"
     if not skill_path.exists():
         fail(f"SKILL.md not found at {skill_path}")
         return
@@ -103,10 +107,10 @@ def validate_skill() -> None:
     name_match = re.search(r"^name:\s*(\S+)", frontmatter, re.MULTILINE)
     if not name_match:
         fail("name field missing in frontmatter")
-    elif name_match.group(1) == "hermes":
-        pass_("name: hermes")
+    elif name_match.group(1) == SKILL_NAME:
+        pass_(f"name: {SKILL_NAME}")
     else:
-        fail(f"name is {name_match.group(1)!r}, expected 'hermes'")
+        fail(f"name is {name_match.group(1)!r}, expected {SKILL_NAME!r}")
 
     if re.search(r"^description:\s*", frontmatter, re.MULTILINE):
         pass_("description field present")
@@ -115,8 +119,8 @@ def validate_skill() -> None:
 
 
 def validate_repo_skill() -> None:
-    section(".agents/skills/hermes/SKILL.md")
-    skill_path = ROOT / ".agents" / "skills" / "hermes" / "SKILL.md"
+    section(".agents/skills/cormes/SKILL.md")
+    skill_path = ROOT / ".agents" / "skills" / "cormes" / "SKILL.md"
     if not skill_path.exists():
         fail(f"Repo skill not found at {skill_path}")
         return
@@ -134,10 +138,10 @@ def validate_repo_skill() -> None:
     name_match = re.search(r"^name:\s*(\S+)", frontmatter, re.MULTILINE)
     if not name_match:
         fail("name field missing in frontmatter")
-    elif name_match.group(1) == "hermes":
-        pass_("name: hermes")
+    elif name_match.group(1) == SKILL_NAME:
+        pass_(f"name: {SKILL_NAME}")
     else:
-        fail(f"name is {name_match.group(1)!r}, expected 'hermes'")
+        fail(f"name is {name_match.group(1)!r}, expected {SKILL_NAME!r}")
 
     if re.search(r"^description:\s*", frontmatter, re.MULTILINE):
         pass_("description field present")
@@ -146,46 +150,51 @@ def validate_repo_skill() -> None:
 
 
 def validate_wrapper() -> None:
-    section("scripts/invoke-hermes.py")
-    wrapper_path = ROOT / "scripts" / "invoke-hermes.py"
+    section("scripts/invoke-cormes.py")
+    wrapper_path = ROOT / "scripts" / "invoke-cormes.py"
     if wrapper_path.exists():
-        pass_("invoke-hermes.py exists")
+        pass_("invoke-cormes.py exists")
     else:
-        fail(f"invoke-hermes.py not found at {wrapper_path}")
+        fail(f"invoke-cormes.py not found at {wrapper_path}")
 
 
 def validate_command_copies() -> None:
-    section("commands/hermes.md copies")
-    root_command = ROOT / "commands" / "hermes.md"
-    codex_command = ROOT / ".codex" / "commands" / "hermes.md"
+    section("commands/cormes.md copies")
+    root_command = ROOT / "commands" / "cormes.md"
+    codex_command = ROOT / ".codex" / "commands" / "cormes.md"
 
     if root_command.exists():
-        pass_("commands/hermes.md exists")
+        pass_("commands/cormes.md exists")
     else:
-        fail(f"commands/hermes.md not found at {root_command}")
+        fail(f"commands/cormes.md not found at {root_command}")
 
     if codex_command.exists():
-        pass_(".codex/commands/hermes.md exists")
+        pass_(".codex/commands/cormes.md exists")
     else:
-        fail(f".codex/commands/hermes.md not found at {codex_command}")
+        fail(f".codex/commands/cormes.md not found at {codex_command}")
 
     if root_command.exists() and codex_command.exists():
         if cmp(root_command, codex_command, shallow=False):
             pass_("legacy command copies are identical")
         else:
-            fail("commands/hermes.md and .codex/commands/hermes.md differ")
+            fail("commands/cormes.md and .codex/commands/cormes.md differ")
 
 
 def scan_privacy_and_secrets() -> None:
     section("privacy & secret scan")
     scan_paths = [
         ".codex-plugin/plugin.json",
-        ".agents/skills/hermes/SKILL.md",
-        "skills/hermes/SKILL.md",
-        "commands/hermes.md",
-        ".codex/commands/hermes.md",
-        "scripts/invoke-hermes.py",
+        ".agents/plugins/marketplace.json",
+        ".agents/skills/cormes/SKILL.md",
+        "skills/cormes/SKILL.md",
+        "commands/cormes.md",
+        ".codex/commands/cormes.md",
+        ".env.example",
+        ".githooks/pre-commit",
+        "scripts/invoke-cormes.py",
         "README.md",
+        "README.ja.md",
+        "README.zh-CN.md",
         "PLANS.md",
     ]
     token_pattern = re.compile(
@@ -219,7 +228,7 @@ def scan_privacy_and_secrets() -> None:
 
 
 def main() -> int:
-    print("Validating codex-hermes plugin...")
+    print("Validating cormes plugin...")
     print(f"Root: {ROOT}")
     validate_plugin_json()
     validate_skill()

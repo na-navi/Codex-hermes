@@ -1,22 +1,21 @@
-# codex-hermes
+# cormes
 
 言語: 日本語 | [English](README.md) | [简体中文](README.zh-CN.md)
 
-![Codex Hermes workflow hero](./assets/codex-hermes-hero.webp)
+![Cormes workflow hero](./assets/codex-hermes-hero.webp)
 
 Codex App のタスクをローカルの Hermes CLI に渡し、返ってきた回答を
 Codex がレビューしてから処理を続けるための実験的な Codex plugin です。
 
-目的はシンプルです。このリポジトリを Codex plugin としてインストールし、
-任意の Codex workspace から Hermes タスクを実行して、Hermes の返答を受け取れる
-状態にします。
+Cormes は Codex 側の wrapper です。外部の `hermes` CLI に委譲し、Hermes の回答を
+untrusted data として扱って Codex がレビューします。
 
 ## デモ
 
-![Codex Hermes review loop demo](./assets/demo-review-loop.webp)
+![Cormes review loop demo](./assets/demo-review-loop.webp)
 
-このデモは、plain `hermes` と Codex Hermes の違いを示します。plain Hermes は
-モデル回答を直接返します。一方で Codex Hermes は、その回答を untrusted data として
+このデモは、plain `hermes` と Cormes の違いを示します。plain Hermes は
+モデル回答を直接返します。一方で Cormes は、その回答を untrusted data として
 扱い、ローカルリポジトリと照合してからレビュー済みの最終回答を返します。
 
 ## 最新リリース
@@ -45,7 +44,7 @@ Hermes CLI が使えない環境では Hermes と通信できません。
 2. Codex plugin ディレクトリに plugin をインストールします。
 
 ```powershell
-$pluginRoot = "$env:USERPROFILE\.codex\plugins\codex-hermes"
+$pluginRoot = "$env:USERPROFILE\.codex\plugins\cormes"
 Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
 Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
@@ -68,22 +67,22 @@ git config core.hooksPath .githooks
 ## 開発モード
 
 このリポジトリを Codex workspace として開いている場合、Codex は
-`.agents/skills/hermes/SKILL.md` の repo-local skill も検出できます。
+`.agents/skills/cormes/SKILL.md` の repo-local skill も検出できます。
 これは plugin 開発中には便利ですが、別フォルダから使うには不十分です。
 
 別 workspace から使う場合は、Codex が次の skill を読めるように plugin として
 インストールしてください。
 
 ```text
-%USERPROFILE%\.codex\plugins\codex-hermes\skills\hermes\SKILL.md
+%USERPROFILE%\.codex\plugins\cormes\skills\cormes\SKILL.md
 ```
 
 ## Hermes 連携のテスト
 
-1. 任意の workspace から、Codex で短いタスクを Hermes skill に渡します。
+1. 任意の workspace から、Codex で短いタスクを Cormes skill に渡します。
 
 ```text
-$hermes say hello
+$cormes say hello
 ```
 
 2. 実行が終わるまで待ちます。
@@ -100,10 +99,16 @@ $hermes say hello
 `SESSION_ID` が出ない場合、Hermes が session marker を返していません。ただし、
 返答自体は有効な場合があります。
 
+## 互換性
+
+`$cormes` が主要な Codex skill invocation です。legacy `$hermes` は別 skill alias としては残しません。残すと wrapper と依存先の名前衝突が続くためです。
+
+外部 CLI binary は引き続き `hermes` です。legacy env var の `CODEX_HERMES_STATE_DIR` と `CODEX_HERMES_REPO_ROOT` は、rename 期間の fallback alias として引き続き受け付けます。
+
 ## 重要なファイル
 
 - [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json)
-- [`skills/hermes/SKILL.md`](skills/hermes/SKILL.md)
-- [`.agents/skills/hermes/SKILL.md`](.agents/skills/hermes/SKILL.md)
-- [`scripts/invoke-hermes.py`](scripts/invoke-hermes.py)
+- [`skills/cormes/SKILL.md`](skills/cormes/SKILL.md)
+- [`.agents/skills/cormes/SKILL.md`](.agents/skills/cormes/SKILL.md)
+- [`scripts/invoke-cormes.py`](scripts/invoke-cormes.py)
 - [`scripts/validate-plugin.py`](scripts/validate-plugin.py)

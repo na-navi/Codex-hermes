@@ -1,5 +1,5 @@
 {
-  "name": "codex-hermes",
+  "name": "cormes",
   "version": "0.1.2",
   "description": "Experimental Codex plugin for delegating work to Hermes CLI models with an autonomous review loop.",
   "skills": "./skills/",
@@ -12,12 +12,13 @@
   "license": "MIT",
   "keywords": [
     "codex",
+    "cormes",
     "hermes",
     "skill",
     "review"
   ],
   "interface": {
-    "displayName": "Codex Hermes",
+    "displayName": "Cormes",
     "shortDescription": "Experimental bridge from Codex tasks to Hermes CLI models.",
     "longDescription": "Development-stage Codex plugin for asking a Hermes CLI model for help, then having Codex review the response, run local checks when appropriate, and send focused follow-up review rounds through hermes --resume.",
     "developerName": "na-navi",
@@ -28,7 +29,7 @@
     ],
     "websiteURL": "https://github.com/na-navi/Codex-hermes",
     "defaultPrompt": [
-      "Use Hermes to ask another model to review or solve a task."
+      "Use Cormes to ask Hermes CLI for another model review, then let Codex review the answer."
     ],
     "screenshots": []
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Invoke Hermes CLI and normalize its output for the Codex Hermes skill."""
+"""Invoke Hermes CLI and normalize its output for the Cormes skill."""
 
 from __future__ import annotations
 
@@ -20,7 +20,11 @@ REPO_ROOT = SCRIPT_PATH.parents[1]
 
 
 def state_dir() -> Path:
-    return Path(os.environ.get("CODEX_HERMES_STATE_DIR") or Path(tempfile.gettempdir()) / "codex-hermes")
+    return Path(
+        os.environ.get("CORMES_STATE_DIR")
+        or os.environ.get("CODEX_HERMES_STATE_DIR")
+        or Path(tempfile.gettempdir()) / "cormes"
+    )
 
 
 def model_cache_path() -> Path:
@@ -107,7 +111,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-Raw", "--raw", action="store_true")
     parser.add_argument(
         "--repo-root",
-        default=os.environ.get("CODEX_HERMES_REPO_ROOT"),
+        default=os.environ.get("CORMES_REPO_ROOT") or os.environ.get("CODEX_HERMES_REPO_ROOT"),
         help="Override the repository root used for repo-local state and relative lookups.",
     )
     return parser.parse_args()
@@ -140,7 +144,7 @@ def main() -> int:
         raw = raw or parsed_raw
 
     if not message.strip():
-        raise SystemExit("No Hermes message was provided.")
+        raise SystemExit("No Cormes message was provided.")
 
     cached_model, cached_provider = read_cached_model()
     model = model or cached_model or DEFAULT_MODEL
@@ -162,6 +166,7 @@ def main() -> int:
     env = os.environ.copy()
     env["PYTHONUTF8"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
+    env["CORMES_REPO_ROOT"] = str(repo_root)
     env["CODEX_HERMES_REPO_ROOT"] = str(repo_root)
 
     completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)

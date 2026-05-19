@@ -27,7 +27,7 @@ RESPONSE_BEGIN
 
 **Reading the output:**
 
-- `MODEL` — the resolved target model (e.g. `grok-4.3`). Use this for resume commands.
+- `MODEL` — the resolved target model (e.g. `glm-5.1`). Use this for resume commands.
 - `PROVIDER` — the resolved provider (e.g. `xai-oauth`). Include in resume when present.
 - `SESSION_ID` — the Hermes conversation identifier. Required for review feedback rounds.
 - `RESPONSE_BEGIN` — everything after this line is the Hermes answer text.
@@ -38,7 +38,7 @@ If `SESSION_ID` is missing, Hermes did not return a session marker. The answer t
 
 The user's task text supports optional leading flags:
 
-- `-m <model>`: override the model. Default: cached model, then `grok-4.3`.
+- `-m <model>`: override the model. Default: cached model, then Hermes `config.yaml`, then `glm-5-turbo`.
 - `-p <provider>`: override the provider.
 - `--raw`: return the raw Hermes output without parsing the response block.
 

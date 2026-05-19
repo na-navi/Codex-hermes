@@ -8,7 +8,7 @@ Delegate the user's task to Hermes CLI, then review and improve the answer befor
 ## Arguments
 
 - `message`: task to send to Hermes. Supports optional leading flags:
-  - `-m <model>`: Hermes model name. Default: cached model, then `grok-4.3`.
+  - `-m <model>`: Hermes model name. Default: cached model, then Hermes `config.yaml`, then `glm-5-turbo`.
   - `-p <provider>`: Hermes provider name.
   - `--raw`: return the Hermes answer after review without applying changes.
 

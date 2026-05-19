@@ -4,7 +4,7 @@ A Codex repo/plugin skill that delegates tasks to the local Hermes CLI, then has
 
 ```
 $cormes review this diff
-$cormes -m grok-4.3 explain this failing test
+$cormes -m glm-5.1 explain this failing test
 $cormes -m glm-5.1 -p some-provider propose a fix for issue #12
 ```
 
@@ -67,7 +67,7 @@ Codex reads .agents/skills/cormes/SKILL.md or plugin-bundled skills/cormes/SKILL
 python scripts/invoke-cormes.py -Message "<message>"
         │
         ├─ Parses -m <model> / -p <provider> / --raw flags
-        ├─ Resolves model (flag → cache → grok-4.3)
+        ├─ Resolves model (flag → cache → Hermes config.yaml → glm-5-turbo)
         ├─ Caches model|provider
         ├─ Runs: hermes chat -q "<message>" -Q -m <model> [--provider <provider>]
         │   or (resume): hermes -z "<feedback>" -m <model> --resume <SESSION_ID>

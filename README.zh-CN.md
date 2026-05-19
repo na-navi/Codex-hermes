@@ -98,6 +98,16 @@ $cormes say hello
 如果没有看到 `SESSION_ID`，说明 Hermes 没有返回 session marker。不过返回的回复
 本身仍然可能是有效的。
 
+## 模型指定
+
+默认情况下，Cormes 会使用 Hermes `config.yaml` 中的 `model.default` / `model.provider`。如果需要显式指定，可以放在 task 文本开头。
+
+```text
+$cormes -m glm-5.1 -p zai say hello
+```
+
+优先级依次是显式指定、Cormes model cache、Hermes `config.yaml`、最后 fallback 到 `glm-5-turbo`。
+
 ## 兼容性
 
 `$cormes` 是主要的 Codex skill invocation。legacy `$hermes` 不再作为独立 skill alias 保留，因为那会继续混淆 wrapper 和依赖项的名称。

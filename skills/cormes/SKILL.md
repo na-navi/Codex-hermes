@@ -82,3 +82,12 @@ These are parsed from the `-Message` argument by `invoke-cormes.py`.
 - Do not add or replace automations with `sh`, `ps1`, `bat`, or `cmd` scripts.
 - `scripts/validate-plugin.py` is the canonical plugin validator.
 - `.githooks/pre-commit` is Python source despite having no extension, because Git hooks are named by hook type.
+
+## PR Final Gate
+
+- Before creating a PR, deploy the candidate branch to the local Codex plugin directory and run a real installed-plugin smoke test.
+- This final installed-plugin test is required because the plugin is publicly available and regressions can affect users.
+- Earlier in the task, use any reasonable local tests, unit tests, or lightweight checks as needed.
+- Immediately before PR creation, ask Hermes to review the PR diff once.
+- If Hermes reports a concrete issue, Codex may do one focused reconsideration/fix pass and re-check.
+- Do not continue an open-ended Hermes review loop for PR creation. If Codex and Hermes still disagree after that one reconsideration, report the disagreement to the user instead of creating or merging the PR silently.

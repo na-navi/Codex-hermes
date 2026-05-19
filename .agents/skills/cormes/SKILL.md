@@ -15,6 +15,15 @@ Local project rule:
 - `scripts/validate-plugin.py` is the canonical plugin validator.
 - `.githooks/pre-commit` is Python source despite having no extension, because Git hooks are named by hook type.
 
+PR final gate:
+- Treat the final outbound step as the gate: creating a PR, pushing a review update, marking a PR ready, or merging a PR.
+- Immediately before that final outbound step, deploy the candidate branch to the local Codex plugin directory and run a real installed-plugin smoke test.
+- This final installed-plugin test is required because the plugin is publicly available and regressions can affect users.
+- Earlier in the task, use any reasonable local tests, unit tests, or lightweight checks as needed.
+- Immediately before that final outbound step, ask Hermes once for the missing information, risk check, or targeted review needed to make the outbound decision.
+- If Hermes reports a concrete issue, Codex may do one focused reconsideration/fix pass and re-check.
+- Do not continue an open-ended Hermes loop. If Codex and Hermes still disagree after that one reconsideration, report the disagreement to the user instead of pushing, creating, marking ready, or merging silently.
+
 Workflow:
 1. Treat the user's request as the complete task text.
 2. Run Hermes through `python scripts/invoke-cormes.py -Message "<task>"`.

@@ -193,6 +193,7 @@ def scan_privacy_and_secrets() -> None:
         ".githooks/pre-commit",
         "scripts/invoke-cormes.py",
         "README.md",
+        "README.en.md",
         "README.ja.md",
         "README.zh-CN.md",
         "PLANS.md",

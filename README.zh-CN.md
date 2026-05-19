@@ -1,6 +1,6 @@
 # cormes
 
-语言: 简体中文 | [English](README.md) | [日本語](README.ja.md)
+[日本語](README.md) / [English](README.en.md) / [简体中文](README.zh-CN.md)
 
 ![Cormes workflow hero](./assets/codex-hermes-hero.webp)
 
@@ -47,7 +47,7 @@ hermes --help
 $pluginRoot = "$env:USERPROFILE\.codex\plugins\cormes"
 Remove-Item -Recurse -Force $pluginRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $pluginRoot | Out-Null
-Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.ja.md, README.zh-CN.md, LICENSE $pluginRoot
+Copy-Item -Recurse -Force .codex-plugin, skills, commands, scripts, assets, README.md, README.en.md, README.zh-CN.md, LICENSE $pluginRoot
 ```
 
 3. 重启 Codex App，或打开一个新 thread，以刷新 plugin skill 列表。

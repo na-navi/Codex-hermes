@@ -26,6 +26,11 @@ class InvokeCormesTests(unittest.TestCase):
         script.write_text(
             "\n".join(
                 [
+                    "import os",
+                    "import sys",
+                    "argv_file = os.environ.get('CORMES_TEST_ARGV_FILE')",
+                    "if argv_file:",
+                    "    open(argv_file, 'w', encoding='utf-8').write('\\n'.join(sys.argv[1:]))",
                     "print('Query: test')",
                     "print('Initializing agent...')",
                     "print('╭─ Hermes ─╮')",
@@ -49,16 +54,28 @@ class InvokeCormesTests(unittest.TestCase):
         return directory
 
     def run_wrapper(self, *args: str, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
-        with tempfile.TemporaryDirectory() as fake_bin:
+        result, _ = self.run_wrapper_with_argv(*args, extra_env=extra_env)
+        return result
+
+    def run_wrapper_with_argv(
+        self, *args: str, extra_env: dict[str, str] | None = None
+    ) -> tuple[subprocess.CompletedProcess[str], list[str]]:
+        with tempfile.TemporaryDirectory() as fake_bin, tempfile.TemporaryDirectory() as state_dir:
             env = os.environ.copy()
             env["PATH"] = str(self.make_fake_hermes_bin(Path(fake_bin))) + os.pathsep + env.get("PATH", "")
             env["PYTHONUTF8"] = "1"
             env["PYTHONIOENCODING"] = "utf-8"
-            env["CORMES_STATE_DIR"] = str(Path(tempfile.gettempdir()) / "cormes-test-state")
+            env["CORMES_STATE_DIR"] = state_dir
+            env["HERMES_HOME"] = str(Path(state_dir) / "missing-hermes-home")
+            env["LOCALAPPDATA"] = str(Path(state_dir) / "local-app-data")
+            env["HOME"] = state_dir
+            env["USERPROFILE"] = state_dir
+            argv_file = Path(state_dir) / "argv.txt"
+            env["CORMES_TEST_ARGV_FILE"] = str(argv_file)
             if extra_env:
                 env.update(extra_env)
 
-            return subprocess.run(
+            result = subprocess.run(
                 [sys.executable, str(SCRIPT), *args],
                 cwd=tempfile.gettempdir(),
                 capture_output=True,
@@ -66,11 +83,13 @@ class InvokeCormesTests(unittest.TestCase):
                 env=env,
                 check=False,
             )
+            argv = argv_file.read_text(encoding="utf-8").splitlines() if argv_file.exists() else []
+            return result, argv
 
     def test_main_flow_normalizes_output_and_is_cwd_independent(self) -> None:
         result = self.run_wrapper("-Message", "hello")
         self.assertEqual(result.returncode, 0, msg=result.stderr)
-        self.assertIn("MODEL=grok-4.3", result.stdout)
+        self.assertIn("MODEL=glm-5-turbo", result.stdout)
         self.assertIn("SESSION_ID=test-session-123", result.stdout)
         self.assertIn("RESPONSE_BEGIN", result.stdout)
         self.assertIn("日本語OK", result.stdout)
@@ -98,6 +117,95 @@ class InvokeCormesTests(unittest.TestCase):
         result = self.run_wrapper("-Message", "hello", extra_env=env)
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("RESPONSE_BEGIN", result.stdout)
+
+    def test_hermes_config_default_model_and_provider_are_used(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text(
+                "model:\n  provider: zai\n  default: glm-5.1\n",
+                encoding="utf-8",
+            )
+            result, argv = self.run_wrapper_with_argv("-Message", "hello", extra_env={"HERMES_HOME": hermes_home})
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=glm-5.1", result.stdout)
+        self.assertIn("PROVIDER=zai", result.stdout)
+        self.assertIn("-m", argv)
+        self.assertIn("glm-5.1", argv)
+        self.assertIn("--provider", argv)
+        self.assertIn("zai", argv)
+
+    def test_missing_or_empty_config_falls_back_to_hardcoded_default(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text("model:\n  default: ''\n", encoding="utf-8")
+            result = self.run_wrapper("-Message", "hello", extra_env={"HERMES_HOME": hermes_home})
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=glm-5-turbo", result.stdout)
+
+    def test_malformed_config_falls_back_to_hardcoded_default(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text("model: [\n", encoding="utf-8")
+            result = self.run_wrapper("-Message", "hello", extra_env={"HERMES_HOME": hermes_home})
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=glm-5-turbo", result.stdout)
+
+    def test_cached_model_takes_priority_over_hermes_config(self) -> None:
+        with tempfile.TemporaryDirectory() as state_dir, tempfile.TemporaryDirectory() as hermes_home:
+            Path(state_dir, "default-model.txt").write_text("cached-model|cached-provider", encoding="utf-8")
+            Path(hermes_home, "config.yaml").write_text(
+                "model:\n  provider: config-provider\n  default: config-model\n",
+                encoding="utf-8",
+            )
+            result = self.run_wrapper(
+                "-Message",
+                "hello",
+                extra_env={"CORMES_STATE_DIR": state_dir, "HERMES_HOME": hermes_home},
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=cached-model", result.stdout)
+        self.assertIn("PROVIDER=cached-provider", result.stdout)
+
+    def test_cli_model_and_provider_take_priority(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text(
+                "model:\n  provider: config-provider\n  default: config-model\n",
+                encoding="utf-8",
+            )
+            result, argv = self.run_wrapper_with_argv(
+                "-Message",
+                "hello",
+                "-Model",
+                "cli-model",
+                "-Provider",
+                "cli-provider",
+                extra_env={"HERMES_HOME": hermes_home},
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=cli-model", result.stdout)
+        self.assertIn("PROVIDER=cli-provider", result.stdout)
+        self.assertIn("cli-model", argv)
+        self.assertIn("cli-provider", argv)
+
+    def test_message_model_and_provider_flags_take_priority(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text(
+                "model:\n  provider: config-provider\n  default: config-model\n",
+                encoding="utf-8",
+            )
+            result, argv = self.run_wrapper_with_argv(
+                "-Message",
+                "-m message-model -p message-provider hello",
+                extra_env={"HERMES_HOME": hermes_home},
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=message-model", result.stdout)
+        self.assertIn("PROVIDER=message-provider", result.stdout)
+        self.assertIn("message-model", argv)
+        self.assertIn("message-provider", argv)
 
 
 if __name__ == "__main__":

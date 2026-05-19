@@ -94,6 +94,16 @@ $cormes say hello
 If you see `Hermes CLI was not found on PATH`, the CLI is not installed or the shell cannot see it yet.
 If you see no `SESSION_ID`, Hermes did not return a session marker, but the reply can still be valid.
 
+## Model Selection
+
+By default, Cormes uses `model.default` / `model.provider` from Hermes `config.yaml`. You can override them at the beginning of the task text.
+
+```text
+$cormes -m glm-5.1 -p zai say hello
+```
+
+The priority order is explicit flags, the Cormes model cache, Hermes `config.yaml`, then the `glm-5-turbo` fallback.
+
 ## Compatibility
 
 `$cormes` is the primary Codex skill invocation. Legacy `$hermes` invocation is not kept as a separate skill alias in this repository, because that would preserve the wrapper/dependency name collision.

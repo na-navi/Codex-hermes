@@ -14,7 +14,7 @@ import tempfile
 from pathlib import Path
 
 
-DEFAULT_MODEL = "grok-4.3"
+DEFAULT_MODEL = "glm-5-turbo"
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[1]
 
@@ -49,6 +49,83 @@ def write_cached_model(model: str, provider: str) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     value = f"{model}|{provider}" if provider else model
     model_cache_path().write_text(value, encoding="utf-8")
+
+
+def hermes_config_paths() -> list[Path]:
+    paths: list[Path] = []
+    hermes_home = os.environ.get("HERMES_HOME")
+    if hermes_home:
+        paths.append(Path(hermes_home) / "config.yaml")
+
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if local_app_data:
+        paths.append(Path(local_app_data) / "hermes" / "config.yaml")
+
+    paths.append(Path.home() / ".config" / "hermes" / "config.yaml")
+
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in paths:
+        key = str(path)
+        if key not in seen:
+            unique.append(path)
+            seen.add(key)
+    return unique
+
+
+def clean_yaml_scalar(value: str) -> str:
+    value = value.strip()
+    if "#" in value and not value.startswith(("'", '"')):
+        value = value.split("#", 1)[0].strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+        value = value[1:-1]
+    return value.strip()
+
+
+def parse_hermes_model_config(text: str) -> tuple[str | None, str]:
+    in_model = False
+    model_indent = 0
+    values: dict[str, str] = {}
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        indent = len(line) - len(line.lstrip(" "))
+        model_match = re.match(r"^model\s*:\s*(.*)$", line)
+        if model_match:
+            trailing = clean_yaml_scalar(model_match.group(1))
+            if trailing and trailing != "{}":
+                return None, ""
+            in_model = True
+            model_indent = indent
+            continue
+
+        if not in_model:
+            continue
+
+        if indent <= model_indent:
+            break
+
+        field_match = re.match(r"^\s+(default|provider)\s*:\s*(.*?)\s*$", line)
+        if field_match:
+            values[field_match.group(1)] = clean_yaml_scalar(field_match.group(2))
+
+    return values.get("default") or None, values.get("provider", "")
+
+
+def read_hermes_default_model() -> tuple[str | None, str]:
+    for path in hermes_config_paths():
+        try:
+            if not path.exists():
+                continue
+            model, provider = parse_hermes_model_config(path.read_text(encoding="utf-8"))
+            if model:
+                return model, provider
+        except OSError:
+            continue
+    return None, ""
 
 
 def split_message_flags(text: str) -> tuple[str, str | None, str | None, bool]:
@@ -147,8 +224,9 @@ def main() -> int:
         raise SystemExit("No Cormes message was provided.")
 
     cached_model, cached_provider = read_cached_model()
-    model = model or cached_model or DEFAULT_MODEL
-    provider = provider or cached_provider
+    config_model, config_provider = read_hermes_default_model()
+    model = model or cached_model or config_model or DEFAULT_MODEL
+    provider = provider or cached_provider or (config_provider if config_model else "")
     write_cached_model(model, provider or "")
 
     hermes = shutil.which("hermes")

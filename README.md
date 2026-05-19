@@ -99,6 +99,16 @@ $cormes say hello
 `SESSION_ID` が出ない場合、Hermes が session marker を返していません。ただし、
 返答自体は有効な場合があります。
 
+## モデル指定
+
+通常は Hermes の `config.yaml` にある `model.default` / `model.provider` を使います。明示的に変えたい場合は、task の先頭で指定できます。
+
+```text
+$cormes -m glm-5.1 -p zai say hello
+```
+
+優先順位は、明示指定、Cormes の model cache、Hermes `config.yaml`、`glm-5-turbo` fallback の順です。
+
 ## 互換性
 
 `$cormes` が主要な Codex skill invocation です。legacy `$hermes` は別 skill alias としては残しません。残すと wrapper と依存先の名前衝突が続くためです。

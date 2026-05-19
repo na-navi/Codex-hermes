@@ -57,6 +57,12 @@ def hermes_config_paths() -> list[Path]:
     if hermes_home:
         paths.append(Path(hermes_home) / "config.yaml")
 
+    user_profile = os.environ.get("USERPROFILE")
+    if user_profile:
+        paths.append(Path(user_profile) / ".hermes" / "config.yaml")
+
+    paths.append(Path.home() / ".hermes" / "config.yaml")
+
     local_app_data = os.environ.get("LOCALAPPDATA")
     if local_app_data:
         paths.append(Path(local_app_data) / "hermes" / "config.yaml")
@@ -108,11 +114,11 @@ def parse_hermes_model_config(text: str) -> tuple[str | None, str]:
         if indent <= model_indent:
             break
 
-        field_match = re.match(r"^\s+(default|provider)\s*:\s*(.*?)\s*$", line)
+        field_match = re.match(r"^\s+(default|model|provider)\s*:\s*(.*?)\s*$", line)
         if field_match:
             values[field_match.group(1)] = clean_yaml_scalar(field_match.group(2))
 
-    return values.get("default") or None, values.get("provider", "")
+    return values.get("default") or values.get("model") or None, values.get("provider", "")
 
 
 def read_hermes_default_model() -> tuple[str | None, str]:

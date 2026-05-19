@@ -134,6 +134,41 @@ class InvokeCormesTests(unittest.TestCase):
         self.assertIn("--provider", argv)
         self.assertIn("zai", argv)
 
+    def test_home_hermes_config_path_is_used(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            config_dir = Path(home_dir, ".hermes")
+            config_dir.mkdir()
+            Path(config_dir, "config.yaml").write_text(
+                "model:\n  provider: home-provider\n  default: home-model\n",
+                encoding="utf-8",
+            )
+            result = self.run_wrapper(
+                "-Message",
+                "hello",
+                extra_env={
+                    "HERMES_HOME": "",
+                    "LOCALAPPDATA": "",
+                    "HOME": home_dir,
+                    "USERPROFILE": home_dir,
+                },
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=home-model", result.stdout)
+        self.assertIn("PROVIDER=home-provider", result.stdout)
+
+    def test_model_key_alias_is_used_when_default_is_missing(self) -> None:
+        with tempfile.TemporaryDirectory() as hermes_home:
+            Path(hermes_home, "config.yaml").write_text(
+                "model:\n  provider: zai\n  model: glm-5.1\n",
+                encoding="utf-8",
+            )
+            result = self.run_wrapper("-Message", "hello", extra_env={"HERMES_HOME": hermes_home})
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertIn("MODEL=glm-5.1", result.stdout)
+        self.assertIn("PROVIDER=zai", result.stdout)
+
     def test_missing_or_empty_config_falls_back_to_hardcoded_default(self) -> None:
         with tempfile.TemporaryDirectory() as hermes_home:
             Path(hermes_home, "config.yaml").write_text("model:\n  default: ''\n", encoding="utf-8")

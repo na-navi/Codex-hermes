@@ -98,6 +98,17 @@ $cormes say hello
 如果没有看到 `SESSION_ID`，说明 Hermes 没有返回 session marker。不过返回的回复
 本身仍然可能是有效的。
 
+## Doctor
+
+`--doctor` 会为本地 Codex / Cormes 环境输出只读 JSON health snapshot。
+它不会执行 Hermes，不会写入 model cache，不会读取 config / auth / session 内容，也不会递归扫描 `.codex`。
+
+```text
+python scripts/invoke-cormes.py --doctor
+```
+
+即使 report 中包含 `fail` item，只要 report 成功输出，process exit code 仍为 `0`。非 0 只用于 invalid arguments 或 doctor 本身无法安全完成的情况。
+
 ## 模型指定
 
 默认情况下，Cormes 会使用 Hermes `config.yaml` 中的 `model.default` / `model.provider`。如果需要显式指定，可以放在 task 文本开头。

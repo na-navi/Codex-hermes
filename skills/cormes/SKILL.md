@@ -41,6 +41,7 @@ The user's task text supports optional leading flags:
 - `-m <model>`: override the model. Default: cached model, then Hermes `config.yaml`, then `glm-5-turbo`.
 - `-p <provider>`: override the provider.
 - `--raw`: return the raw Hermes output without parsing the response block.
+- `--doctor`: emit a read-only JSON health snapshot. This does not require a message, does not execute Hermes, does not write model cache state, and does not read config/auth/session contents.
 
 These are parsed from the `-Message` argument by `invoke-cormes.py`.
 

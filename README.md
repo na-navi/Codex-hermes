@@ -99,6 +99,17 @@ $cormes say hello
 `SESSION_ID` が出ない場合、Hermes が session marker を返していません。ただし、
 返答自体は有効な場合があります。
 
+## Doctor
+
+`--doctor` は、ローカルの Codex / Cormes 環境について読み取り専用の JSON health snapshot を出します。
+Hermes は実行せず、model cache も書き込まず、config / auth / session の中身や `.codex` 配下の再帰スキャンも行いません。
+
+```text
+python scripts/invoke-cormes.py --doctor
+```
+
+report に `fail` item が含まれていても、report を出せた場合の process exit code は `0` です。非 0 は invalid arguments や doctor 自体が安全に完走できなかった場合だけに使います。
+
 ## モデル指定
 
 通常は Hermes の `config.yaml` にある `model.default` / `model.provider` を使います。明示的に変えたい場合は、task の先頭で指定できます。

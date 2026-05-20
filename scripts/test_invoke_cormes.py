@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import importlib.util
 import subprocess
@@ -117,6 +118,151 @@ class InvokeCormesTests(unittest.TestCase):
         result = self.run_wrapper("-Message", "hello", extra_env=env)
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("RESPONSE_BEGIN", result.stdout)
+
+    def test_doctor_accepts_no_message_and_emits_json(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            env = os.environ.copy()
+            env["PATH"] = ""
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            env["CORMES_STATE_DIR"] = str(Path(home_dir) / "missing-state")
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=home_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["schema_version"], 1)
+        self.assertEqual(report["tool"], "cormes-doctor")
+        self.assertEqual(report["mode"], "read_only")
+        self.assertIn("summary", report)
+        self.assertIsInstance(report["items"], list)
+
+    def test_normal_mode_still_requires_message(self) -> None:
+        result = self.run_wrapper()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("No Cormes message was provided.", result.stderr)
+
+    def test_doctor_does_not_execute_hermes(self) -> None:
+        with tempfile.TemporaryDirectory() as fake_bin, tempfile.TemporaryDirectory() as home_dir:
+            argv_file = Path(home_dir) / "argv.txt"
+            env = os.environ.copy()
+            env["PATH"] = str(self.make_fake_hermes_bin(Path(fake_bin)))
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            env["CORMES_STATE_DIR"] = str(Path(home_dir) / "missing-state")
+            env["CORMES_TEST_ARGV_FILE"] = str(argv_file)
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=home_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertFalse(argv_file.exists())
+
+    def test_doctor_does_not_create_model_cache_or_state_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            state_dir = Path(home_dir) / "state-was-not-created"
+            env = os.environ.copy()
+            env["PATH"] = ""
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            env["CORMES_STATE_DIR"] = str(state_dir)
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=home_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr)
+            self.assertFalse(state_dir.exists())
+            self.assertFalse((state_dir / "default-model.txt").exists())
+
+    def test_doctor_redacts_home_and_does_not_report_secret_values(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            codex_dir = Path(home_dir) / ".codex"
+            codex_dir.mkdir()
+            Path(codex_dir, "config.toml").write_text("token = 'raw-secret-from-config'\n", encoding="utf-8")
+            workspace = Path(home_dir) / "workspace"
+            workspace.mkdir()
+            env = os.environ.copy()
+            env["PATH"] = ""
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            env["CORMES_STATE_DIR"] = str(Path(home_dir) / "state")
+            env["CORMES_TEST_TOKEN"] = "raw-secret-from-env"
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=workspace,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertNotIn(home_dir, result.stdout)
+        self.assertNotIn("raw-secret-from-config", result.stdout)
+        self.assertNotIn("raw-secret-from-env", result.stdout)
+        report = json.loads(result.stdout)
+        details = "\n".join(item["detail"] for item in report["items"])
+        self.assertIn("~", details)
+
+    def test_doctor_redacts_absolute_workspace_path_outside_home(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir, tempfile.TemporaryDirectory() as workspace_dir:
+            env = os.environ.copy()
+            env["PATH"] = ""
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=workspace_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        self.assertNotIn(workspace_dir, result.stdout)
+        self.assertNotIn(str(ROOT), result.stdout)
+        report = json.loads(result.stdout)
+        cwd_item = next(item for item in report["items"] if item["key"] == "cwd")
+        script_item = next(item for item in report["items"] if item["key"] == "script.path")
+        self.assertEqual(cwd_item["detail"], f"<absolute-path>{os.sep}{Path(workspace_dir).name}")
+        self.assertEqual(script_item["detail"], f"<absolute-path>{os.sep}{SCRIPT.name}")
+
+    def test_doctor_health_fail_still_exits_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as home_dir:
+            env = os.environ.copy()
+            env["PATH"] = ""
+            env["HOME"] = home_dir
+            env["USERPROFILE"] = home_dir
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--doctor"],
+                cwd=home_dir,
+                capture_output=True,
+                text=True,
+                env=env,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, msg=result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["summary"]["status"], "fail")
+        self.assertTrue(any(item["key"] == "hermes.which" and item["status"] == "fail" for item in report["items"]))
 
     def test_hermes_config_default_model_and_provider_are_used(self) -> None:
         with tempfile.TemporaryDirectory() as hermes_home:

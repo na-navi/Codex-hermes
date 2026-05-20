@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -17,6 +19,19 @@ from pathlib import Path
 DEFAULT_MODEL = "glm-5-turbo"
 SCRIPT_PATH = Path(__file__).resolve()
 REPO_ROOT = SCRIPT_PATH.parents[1]
+DOCTOR_ENV_OVERRIDES = [
+    "CORMES_STATE_DIR",
+    "CODEX_HERMES_STATE_DIR",
+    "CORMES_REPO_ROOT",
+    "CODEX_HERMES_REPO_ROOT",
+    "HERMES_HOME",
+]
+
+
+class CormesArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        self.print_usage(sys.stderr)
+        self.exit(1, f"{self.prog}: error: {message}\n")
 
 
 def state_dir() -> Path:
@@ -29,6 +44,168 @@ def state_dir() -> Path:
 
 def model_cache_path() -> Path:
     return state_dir() / "default-model.txt"
+
+
+def redaction_roots() -> list[str]:
+    roots: list[str] = []
+    for value in (os.environ.get("USERPROFILE"), os.environ.get("HOME"), str(Path.home())):
+        if value and value not in roots:
+            roots.append(value)
+    return sorted(roots, key=len, reverse=True)
+
+
+def redact_path(value: str | Path) -> str:
+    text = str(value)
+    try:
+        normalized_text = os.path.normpath(text)
+    except OSError:
+        return "<unprintable-path>"
+
+    for root in redaction_roots():
+        normalized_root = os.path.normpath(root)
+        text_key = os.path.normcase(normalized_text)
+        root_key = os.path.normcase(normalized_root)
+        if text_key == root_key:
+            return "~"
+        if text_key.startswith(root_key + os.sep):
+            suffix = normalized_text[len(normalized_root) :].lstrip("\\/")
+            return "~" + os.sep + suffix
+    if os.path.isabs(normalized_text):
+        name = os.path.basename(normalized_text.rstrip("\\/"))
+        return f"<absolute-path>{os.sep}{name}" if name else "<absolute-path>"
+    return text
+
+
+def doctor_item(status: str, category: str, key: str, detail: str) -> dict[str, str]:
+    return {"status": status, "category": category, "key": key, "detail": detail}
+
+
+def is_readable_dir(path: Path) -> bool:
+    try:
+        with os.scandir(path):
+            return True
+    except OSError:
+        return False
+
+
+def add_path_item(items: list[dict[str, str]], category: str, key: str, path: Path) -> None:
+    items.append(doctor_item("pass", category, key, redact_path(path)))
+
+
+def add_dir_health(items: list[dict[str, str]], category: str, key: str, path: Path, missing_status: str = "warn") -> None:
+    redacted = redact_path(path)
+    if not path.exists():
+        items.append(doctor_item(missing_status, category, key, f"{redacted} does not exist."))
+        return
+    if not path.is_dir():
+        items.append(doctor_item("fail", category, key, f"{redacted} exists but is not a directory."))
+        return
+    if is_readable_dir(path):
+        items.append(doctor_item("pass", category, key, f"{redacted} exists and is readable."))
+    else:
+        items.append(doctor_item("warn", category, key, f"{redacted} exists but was not readable."))
+
+
+def which_detail(executable: str) -> tuple[str, str]:
+    found = shutil.which(executable)
+    if found:
+        return "pass", f"Found at {redact_path(found)}."
+    return "fail", f"{executable} executable was not found on PATH."
+
+
+def sensitive_env_count() -> int:
+    pattern = re.compile(r"(TOKEN|KEY|AUTH|SECRET)", re.IGNORECASE)
+    return sum(1 for name, value in os.environ.items() if value and pattern.search(name))
+
+
+def doctor_summary(items: list[dict[str, str]]) -> dict[str, str]:
+    statuses = {item["status"] for item in items}
+    if "fail" in statuses:
+        status = "fail"
+    elif "warn" in statuses:
+        status = "warn"
+    elif "pass" in statuses:
+        status = "pass"
+    else:
+        status = "unknown"
+
+    recommended_next_step = "No immediate action from the read-only doctor report."
+    for item in items:
+        if item["key"] == "hermes.which" and item["status"] == "fail":
+            recommended_next_step = "Check Hermes CLI installation because the executable was not found on PATH."
+            break
+        if item["key"] == "plugin.root" and item["status"] == "fail":
+            recommended_next_step = "Verify the Cormes repository or plugin installation because required plugin files are missing."
+            break
+        if item["key"] == "codex.home" and item["status"] == "warn":
+            recommended_next_step = "Open Codex App once or verify the Codex home directory because ~/.codex was not found."
+            break
+
+    return {"status": status, "recommended_next_step": recommended_next_step}
+
+
+def build_doctor_report(repo_root: Path) -> dict[str, object]:
+    items: list[dict[str, str]] = []
+    cwd = Path.cwd()
+    codex_home = Path.home() / ".codex"
+    state = state_dir()
+
+    items.append(doctor_item("pass", "runtime", "os.platform", platform.platform()))
+    items.append(doctor_item("pass", "runtime", "python.version", platform.python_version()))
+    add_path_item(items, "runtime", "python.executable", Path(sys.executable))
+    add_path_item(items, "runtime", "cwd", cwd)
+    items.append(
+        doctor_item(
+            "pass",
+            "runtime",
+            "shell.env",
+            f"SHELL={'set' if os.environ.get('SHELL') else 'unset'}; ComSpec={'set' if os.environ.get('ComSpec') else 'unset'}",
+        )
+    )
+
+    node_status, node_detail = which_detail("node")
+    items.append(doctor_item(node_status, "dependency", "node.which", node_detail))
+    hermes_status, hermes_detail = which_detail("hermes")
+    items.append(doctor_item(hermes_status, "dependency", "hermes.which", hermes_detail))
+
+    add_path_item(items, "plugin", "script.path", SCRIPT_PATH)
+    required_plugin_files = [repo_root / "scripts" / "invoke-cormes.py", repo_root / "skills" / "cormes" / "SKILL.md"]
+    if all(path.exists() for path in required_plugin_files):
+        items.append(doctor_item("pass", "plugin", "plugin.root", f"{redact_path(repo_root)} contains required Cormes files."))
+    else:
+        items.append(doctor_item("fail", "plugin", "plugin.root", f"{redact_path(repo_root)} is missing required Cormes files."))
+    add_path_item(items, "plugin", "state.dir.path", state)
+    add_dir_health(items, "plugin", "state.dir", state, missing_status="warn")
+
+    for name in DOCTOR_ENV_OVERRIDES:
+        value = os.environ.get(name)
+        detail = f"set: {redact_path(value)}" if value else "unset"
+        items.append(doctor_item("pass", "environment", name.lower(), detail))
+    count = sensitive_env_count()
+    detail = f"{count} sensitive-looking environment variable(s) are set; values are not reported."
+    items.append(doctor_item("pass", "environment", "sensitive.values", detail))
+
+    add_dir_health(items, "codex", "codex.home", codex_home, missing_status="warn")
+    add_dir_health(items, "codex", "codex.plugins", codex_home / "plugins", missing_status="warn")
+    add_dir_health(items, "codex", "codex.plugins.cormes", codex_home / "plugins" / "cormes", missing_status="warn")
+    for config_name in ("config.toml", "config.json"):
+        config_path = codex_home / config_name
+        status = "pass" if config_path.exists() else "unknown"
+        detail = f"{redact_path(config_path)} exists." if config_path.exists() else f"{redact_path(config_path)} was not found."
+        items.append(doctor_item(status, "codex", f"codex.{config_name}.exists", detail))
+
+    items.append(doctor_item("unknown", "workspace", "workspace.writeability", "Not tested because --doctor is read-only."))
+    items.append(doctor_item("unknown", "codex", "sandbox.acl", "Not diagnosed because --doctor avoids definitive sandbox or ACL claims."))
+    items.append(doctor_item("unknown", "privacy", "auth.session.contents", "Not inspected because --doctor does not read auth, session, or log contents."))
+    items.append(doctor_item("unknown", "dependency", "hermes.runtime", "Not tested because --doctor does not execute Hermes."))
+
+    return {
+        "schema_version": 1,
+        "tool": "cormes-doctor",
+        "mode": "read_only",
+        "summary": doctor_summary(items),
+        "items": items,
+    }
 
 
 def read_cached_model() -> tuple[str | None, str]:
@@ -186,12 +363,13 @@ def response_block(output: str) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-Message", "--message", required=True)
+    parser = CormesArgumentParser()
+    parser.add_argument("-Message", "--message")
     parser.add_argument("-Model", "--model")
     parser.add_argument("-Provider", "--provider")
     parser.add_argument("-Resume", "--resume")
     parser.add_argument("-Raw", "--raw", action="store_true")
+    parser.add_argument("--doctor", action="store_true", help="Emit a read-only Cormes/Codex health snapshot as JSON.")
     parser.add_argument(
         "--repo-root",
         default=os.environ.get("CORMES_REPO_ROOT") or os.environ.get("CODEX_HERMES_REPO_ROOT"),
@@ -215,7 +393,16 @@ def parse_session_id(output: str) -> str | None:
 def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve() if args.repo_root else REPO_ROOT
-    message = args.message
+
+    if args.doctor:
+        try:
+            print(json.dumps(build_doctor_report(repo_root), ensure_ascii=False, indent=2))
+            return 0
+        except OSError as exc:
+            print(f"Doctor report generation could not complete safely: {exc}", file=sys.stderr)
+            return 2
+
+    message = args.message or ""
     model = args.model
     provider = args.provider
     raw = args.raw

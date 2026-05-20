@@ -94,6 +94,17 @@ $cormes say hello
 If you see `Hermes CLI was not found on PATH`, the CLI is not installed or the shell cannot see it yet.
 If you see no `SESSION_ID`, Hermes did not return a session marker, but the reply can still be valid.
 
+## Doctor
+
+`--doctor` emits a read-only JSON health snapshot for the local Codex / Cormes environment.
+It does not execute Hermes, write the model cache, read config / auth / session contents, or recursively scan `.codex`.
+
+```text
+python scripts/invoke-cormes.py --doctor
+```
+
+If the report contains `fail` items but the report was emitted successfully, the process exit code is still `0`. Non-zero exits are reserved for invalid arguments or doctor itself failing to complete safely.
+
 ## Model Selection
 
 By default, Cormes uses `model.default` / `model.provider` from Hermes `config.yaml`. You can override them at the beginning of the task text.
